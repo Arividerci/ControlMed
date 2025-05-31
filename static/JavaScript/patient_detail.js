@@ -1,21 +1,48 @@
 document.addEventListener('DOMContentLoaded', () => {
-    
+    // --------- patient form (основные данные) ---------
     const form = document.getElementById('patientForm');
     const saveButton = document.getElementById('saveButton');
-    const originalValues = Array.from(form.elements).map(e => e.value);
 
-    form.addEventListener('input', () => {
-        const changed = Array.from(form.elements).some((e, i) => e.value !== originalValues[i]);
-        saveButton.disabled = !changed;
-    });
+    if (form && saveButton) {
+        const originalValues = Array.from(form.elements).map(e => e.value);
 
-    const photoInput = document.getElementById('photoInput');
-    if (photoInput) {
-        photoInput.addEventListener('change', () => {
-            saveButton.disabled = false;
+        form.addEventListener('input', () => {
+            const changed = Array.from(form.elements).some((e, i) => e.value !== originalValues[i]);
+            saveButton.disabled = !changed;
         });
+
+        const photoInput = document.getElementById('photoInput');
+        if (photoInput) {
+            photoInput.addEventListener('change', () => {
+                saveButton.disabled = false;
+            });
+        }
+    }
+
+    // --------- hospitalization form (госпитализация) ---------
+    const hospForm = document.getElementById('hospitalizationForm');
+    const hospSaveBtn = document.getElementById('hospitalizationSaveBtn');
+
+    if (hospForm && hospSaveBtn) {
+        const fields = Array.from(hospForm.elements).filter(el => el.name && el.type !== 'hidden');
+        const initialValues = fields.map(el => el.dataset.original ?? '');
+
+        const isFormEmpty = initialValues.every(val => val === '');
+
+        const updateSaveButton = () => {
+            const changed = fields.some((el, i) => el.value !== initialValues[i]);
+            hospSaveBtn.disabled = !changed;
+        };
+
+        if (isFormEmpty) {
+            hospSaveBtn.disabled = false; // можно сразу вводить и сохранять
+        } else {
+            hospSaveBtn.disabled = true;
+            hospForm.addEventListener('input', updateSaveButton);
+        }
     }
 });
+
 
 
 

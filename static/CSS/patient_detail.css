@@ -218,3 +218,28 @@
     border-radius: 8px;
     cursor: pointer;
 }
+
+.patient-section {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.patient-section.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    position: absolute;
+}
+
+#hospitalization-status {
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+#hospitalization-status:contains("Активна") {
+    color: #d76b49; }
+
+#hospitalization-status:contains("Неактивна") {
+    color: #00626f;
+}

@@ -20,7 +20,7 @@ class Hospitalization(models.Model):
     hospitalization_room = models.SmallIntegerField()
     hospitalization_enddate = models.DateField()   
     medical_staff = models.ForeignKey(MedicalStaff, on_delete=models.RESTRICT, db_column='medical_staff_id')
-    patient = models.ForeignKey('Patient', on_delete=models.CASCADE, db_column='patient_id')
+    patient = models.ForeignKey('Patient',   on_delete=models.CASCADE, db_column='patient_id')
 
     class Meta:
         db_table = 'hospitalization'

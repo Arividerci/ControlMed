@@ -8,19 +8,20 @@ from django.core.exceptions import ValidationError
 
 
 class HospitalizationForm(forms.ModelForm):
-    hospitalization_StartDate = forms.DateField(
-        required=False, 
+    hospitalization_startdate = forms.DateField(
+        required=False,
         widget=forms.DateInput(attrs={'type': 'date'}),
         initial=datetime.date.today
     )
-    hospitalization_EndDate = forms.DateField(
-        widget=forms.DateInput(attrs={'type': 'date'})
+    hospitalization_enddate = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date'}),
+        required=True
     )
 
     class Meta:
         model = Hospitalization
-        fields = ['hospitalization_room', 'hospitalization_StartDate', 'hospitalization_EndDate']
-        
+        fields = ['hospitalization_room', 'hospitalization_startdate', 'hospitalization_enddate']
+
 class AddPatientForm(forms.ModelForm):
     GENDER_CHOICES = [
         ('мужской', 'Мужской'),

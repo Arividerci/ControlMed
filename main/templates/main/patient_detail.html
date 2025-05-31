@@ -14,9 +14,10 @@
 <div id="section-main" class="patient-section">
   <div class="patient-layout">
      <div class="patient-sidebar">
-        <a href="#" id="btn-main" class="patient-sidebar-item {% if active_tab == 'main' %}active{% endif %}" onclick="switchSection('main')">Главная</a>
-        <a href="#" id="btn-hospitalization" class="patient-sidebar-item {% if active_tab == 'hospitalization' %}active{% endif %}" onclick="switchSection('hospitalization')">Госпитализация</a>
-        <a href="#" id="btn-purpose" class="patient-sidebar-item {% if active_tab == 'purpose' %}active{% endif %}" onclick="switchSection('purpose')">Назначения</a>
+        <a href="#" id="btn-main" class="patient-sidebar-item" onclick="switchSection('main', event)">Главная</a>
+        <a href="#" id="btn-hospitalization" class="patient-sidebar-item" onclick="switchSection('hospitalization', event)">Госпитализация</a>
+        <a href="#" id="btn-purpose" class="patient-sidebar-item" onclick="switchSection('purpose', event)">Назначения</a>
+
         <a href="{% url 'patients' %}" class="patient-sidebar-back">Вернуться к пациентам</a>
     </div>
 
@@ -116,9 +117,10 @@
 <div id="section-hospitalization" class="patient-section" style="display: none;">
   <div class="patient-layout">
    <div class="patient-sidebar">
-        <a href="#" id="btn-main" class="patient-sidebar-item {% if active_tab == 'main' %}active{% endif %}" onclick="switchSection('main')">Главная</a>
-<a href="#" id="btn-hospitalization" class="patient-sidebar-item {% if active_tab == 'hospitalization' %}active{% endif %}" onclick="switchSection('hospitalization')">Госпитализация</a>
-<a href="#" id="btn-purpose" class="patient-sidebar-item {% if active_tab == 'purpose' %}active{% endif %}" onclick="switchSection('purpose')">Назначения</a>
+        <a href="#" id="btn-main" class="patient-sidebar-item" onclick="switchSection('main', event)">Главная</a>
+        <a href="#" id="btn-hospitalization" class="patient-sidebar-item" onclick="switchSection('hospitalization', event)">Госпитализация</a>
+        <a href="#" id="btn-purpose" class="patient-sidebar-item" onclick="switchSection('purpose', event)">Назначения</a>
+
         <a href="{% url 'patients' %}" class="patient-sidebar-back">Вернуться к пациентам</a>
     </div>
 
@@ -129,9 +131,10 @@
 <div id="section-purpose" class="patient-section" style="display: none;">
   <div class="patient-layout">
     <div class="patient-sidebar">
-        <a href="#" id="btn-main" class="patient-sidebar-item {% if active_tab == 'main' %}active{% endif %}" onclick="switchSection('main')">Главная</a>
-<a href="#" id="btn-hospitalization" class="patient-sidebar-item {% if active_tab == 'hospitalization' %}active{% endif %}" onclick="switchSection('hospitalization')">Госпитализация</a>
-<a href="#" id="btn-purpose" class="patient-sidebar-item {% if active_tab == 'purpose' %}active{% endif %}" onclick="switchSection('purpose')">Назначения</a>
+      <a href="#" id="btn-main" class="patient-sidebar-item" onclick="switchSection('main', event)">Главная</a>
+        <a href="#" id="btn-hospitalization" class="patient-sidebar-item" onclick="switchSection('hospitalization', event)">Госпитализация</a>
+        <a href="#" id="btn-purpose" class="patient-sidebar-item" onclick="switchSection('purpose', event)">Назначения</a>
+
         <a href="{% url 'patients' %}" class="patient-sidebar-back">Вернуться к пациентам</a>
     </div>
     {% include 'main/purpose_form.html' %}

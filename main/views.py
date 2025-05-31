@@ -212,6 +212,7 @@ from .forms import HospitalizationForm, PurposeForm
 
 @login_required
 def patient_detail(request, patient_id):
+    today = datetime.date.today()
     patient = get_object_or_404(Patient, pk=patient_id)
     active_tab = request.GET.get('tab', 'main')
 
@@ -239,17 +240,37 @@ def patient_detail(request, patient_id):
         elif form_type == 'hospitalization':
             form = HospitalizationForm(request.POST)
             if form.is_valid():
-                hosp = form.save(commit=False)
-                hosp.patient = patient
-
                 try:
-                    hosp.medical_staff = MedicalStaff.objects.get(user=request.user)
+                    staff = MedicalStaff.objects.get(user=request.user)
                 except MedicalStaff.DoesNotExist:
                     messages.error(request, "Вы не привязаны к медперсоналу.")
                     return redirect('patient_detail', patient_id=patient_id)
 
-                hosp.save()
+                # Проверяем: есть ли уже госпитализация
+                hospitalization = Hospitalization.objects.filter(
+                    patient=patient
+                ).order_by('-hospitalization_startdate').first()
+
+                if hospitalization:
+                    # Обновляем существующую запись
+                    hospitalization.hospitalization_room = form.cleaned_data['hospitalization_room']
+                    hospitalization.hospitalization_startdate = form.cleaned_data['hospitalization_startdate']
+                    hospitalization.hospitalization_enddate = form.cleaned_data['hospitalization_enddate']
+                    hospitalization.medical_staff = staff
+                    hospitalization.save()
+                else:
+                    # Создаём новую
+                    new_hosp = form.save(commit=False)
+                    new_hosp.patient = patient
+                    new_hosp.medical_staff = staff
+                    new_hosp.save()
+
                 return redirect(f'/patients/{patient_id}/?tab=hospitalization')
+            else:
+                print("Форма госпитализации невалидна:", form.errors)
+                messages.error(request, f"Ошибка формы госпитализации: {form.errors}")
+
+
 
         elif form_type == 'purpose':
             form = PurposeForm(request.POST)
