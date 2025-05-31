@@ -1,0 +1,65 @@
+{% extends "main/base.html" %}
+{% block title %}Добавить пациента{% endblock %}
+
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'CSS/add-patient.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Добавить пациента</h2>
+
+    <form method="post" enctype="multipart/form-data" class="patient-form">
+        {% csrf_token %}
+
+        <!-- ФИО -->
+        <div class="form-group">
+            {{ form.patient_name.label_tag }}
+            {{ form.patient_name }}
+        </div>
+
+        <!-- Блок: Дата, Пол, Группа крови -->
+        <div class="form-row">
+            <div class="form-group">
+                {{ form.patient_birthday.label_tag }}
+                {{ form.patient_birthday }}
+            </div>
+            <div class="form-group">
+                {{ form.patient_gender.label_tag }}
+                {{ form.patient_gender }}
+            </div>
+            <div class="form-group">
+                {{ form.patient_blood_type.label_tag }}
+                {{ form.patient_blood_type }}
+            </div>
+        </div>
+
+        <!-- Блок: Рост и Вес -->
+        <div class="form-row">
+            <div class="form-group">
+                {{ form.patient_height.label_tag }}
+                {{ form.patient_height }}
+            </div>
+            <div class="form-group">
+                {{ form.patient_weight.label_tag }}
+                {{ form.patient_weight }}
+            </div>
+        </div>
+
+        <!-- Фото -->
+        <div class="form-group-btn">
+            <label for="id_patient_photo">Patient photo:</label>
+            <label for="id_patient_photo" class="custom-file-upload">Выбрать файл</label>
+            {{ form.patient_photo }}
+        </div>
+
+
+        <!-- Кнопки -->
+        <div class="form-actions">
+            <button type="submit" class="save-button">Сохранить</button>
+            <a href="{% url 'patients' %}" class="back-link">← Назад к списку</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

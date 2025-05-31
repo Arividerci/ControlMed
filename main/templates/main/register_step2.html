@@ -1,0 +1,76 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'CSS/register-step2.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="register-step2-wrapper">
+  <div class="register-step2-card">
+    <div class="register-step2-header">
+      <img src="{% static 'images/login-header_1.jpg' %}" alt="header">
+      <h2>Регистрация — шаг 2</h2>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="step2-group">
+        {{ form.medical_staff_name.label_tag }}
+        {{ form.medical_staff_name }}
+      </div>
+
+      <div class="step2-group-inline">
+        <div class="step2-subgroup">
+          {{ form.medical_staff_birthday.label_tag }}
+          {{ form.medical_staff_birthday }}
+        </div>
+        <div class="step2-subgroup">
+          {{ form.medical_staff_gender.label_tag }}
+          {{ form.medical_staff_gender }}
+        </div>
+      </div>
+
+      <div class="step2-group-inline">
+        <div class="step2-subgroup">
+          {{ form.medical_staff_post.label_tag }}
+          {{ form.medical_staff_post }}
+        </div>
+        <div class="step2-subgroup">
+          {{ form.medical_staff_specialisation.label_tag }}
+          {{ form.medical_staff_specialisation }}
+        </div>
+      </div>
+      <button type="submit" class="register-step2-btn">Сохранить</button>
+    </form>
+  </div>
+</div>
+
+
+<script>
+  const genderField = document.getElementById("id_medical_staff_gender");
+  const postField = document.getElementById("id_medical_staff_post");
+
+  const posts = {
+    муж: ["Медбрат", "Ординатор", "Врач"],
+    жен: ["Медсестра", "Ординатор", "Врач"]
+  };
+
+  function updatePostOptions() {
+    const gender = genderField.value.toLowerCase();
+    const options = posts[gender] || [];
+    postField.innerHTML = "";
+
+    options.forEach(function(post) {
+      const option = document.createElement("option");
+      option.value = post;
+      option.textContent = post;
+      postField.appendChild(option);
+    });
+  }
+
+  genderField.addEventListener("change", updatePostOptions);
+  window.addEventListener("DOMContentLoaded", updatePostOptions);
+</script>
+{% endblock %}

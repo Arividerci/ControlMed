@@ -1,0 +1,133 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f1f3f5;
+}
+
+.register-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.register-card {
+    background-color: white;
+    border-radius: 12px;
+    overflow: hidden;
+    width: 520px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+}
+
+.register-header {
+    position: relative;
+    width: 100%;
+    height: 180px;
+}
+
+.register-header img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.register-header h2 {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    color: white;
+    font-size: 26px;
+    font-weight: bold;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+form {
+    padding: 30px;
+    padding-right: 50px;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: #333;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    margin-right: 40px;
+    font-size: 14px;
+    background-color: #f0f4ff;
+    border: 1px solid #ccd;
+    border-radius: 8px;
+    outline: none;
+}
+
+.register-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #006064;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+}
+
+.register-btn:hover {
+    background-color: #004d40;
+}
+
+/* === Шаг 2 регистрации (изолированный стиль) === */
+
+.register-step2-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.register-step2-card {
+    background-color: white;
+    border-radius: 12px;
+    overflow: hidden;
+    width: 520px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+}
+
+.register-step2-header {
+    position: relative;
+    width: 100%;
+    height: 160px;
+}
+
+.register-step2-header img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.register-step2-header h2 {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+form {
+    padding: 30px 40px;
+}
+

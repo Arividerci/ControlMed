@@ -1,0 +1,78 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>{% block title %}ControlMed{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'CSS/base.css' %}">
+    {% block extra_css %}{% endblock %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <div class="logo">
+                <h1><a href="{% url 'home' %}">ControlMed</a></h1>
+            </div>
+            
+            <nav class="main-nav">
+                <div class="sidebar">
+                    <div class="toggle-icon">≡</div>
+                    <div class="sidebar-content">
+                        <ul class="top-menu">
+                            {% if user.is_authenticated %}
+                            <li><a href="{% url 'cabinet' %}">Личный кабинет</a></li>
+                            {% endif %}
+                            <li><h2></h1><a href="{% url 'appointments' %}">Назначения</a></li>
+                            <li><a href="{% url 'patients' %}">Пациенты</a></li>
+                        </ul>
+
+                        {% if user.is_authenticated %}
+                        <div class="bottom-menu">
+                            <form method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                            <button type="submit">Выйти</button>
+                            </form>
+                        </div>
+
+                        {% else %}
+                        <div class="bottom-menu">
+                            <form method="post" action="{% url 'login' %}">
+                            {% csrf_token %}
+                            <button type="submit">Войти</button>
+                            </form>
+                        </div>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        {% block content %}
+        
+        {% endblock %}
+    </main>
+
+    <footer>
+        <p>© 2025 ControlMed</p>
+    </footer>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+        const toggleIcon = document.querySelector('.toggle-icon');
+        const sidebar = document.querySelector('.sidebar');
+
+        toggleIcon.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+        });
+    </script>
+    {% block scripts %}
+    
+    {% endblock %}
+
+</body>
+</html>

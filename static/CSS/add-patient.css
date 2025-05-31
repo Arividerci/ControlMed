@@ -1,0 +1,101 @@
+.form-container {
+    background: #fff;
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    max-width: 800px;
+    margin: 30px auto;
+}
+
+.patient-form .form-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.patient-form .form-group-btn {
+    width: 150px;
+    color: #ffffff;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+.patient-form label {
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #333;
+}
+
+.patient-form input[type="text"],
+.patient-form input[type="number"],
+.patient-form input[type="date"],
+.patient-form select {
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+input[type="file"] {
+    display: none;
+}
+.custom-file-upload {
+    display: inline-block;
+    padding: 10px 18px;
+    background-color: #d76b49;
+    color: white !important; /* <== ключевое исправление */
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 5px;
+    transition: background-color 0.3s ease;
+    text-align: center;
+}
+
+.custom-file-upload:hover {
+    background-color: #c45a3a;
+}
+.file-upload-wrapper {
+    margin-top: 10px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 30px;
+}
+
+.save-button {
+    background-color: #d76b49;
+    color: white;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+.save-button:hover {
+    background-color: #c65d3f;
+}
+
+.back-link {
+    color: #00626f;
+    text-decoration: none;
+    font-weight: bold;
+}
+.back-link:hover {
+    text-decoration: underline;
+}

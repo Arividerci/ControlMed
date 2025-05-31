@@ -1,0 +1,137 @@
+{% extends "main/base.html" %}
+{% block title %}Пациенты{% endblock %}
+
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'CSS/patient.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-container-patient">
+
+    <h2 class="header-patient">Список пациентов</h2>
+
+    <!-- Панель управления таблицей и карточками -->
+    <div class="table-toolbar">
+        <div class="table-toolbar-left">
+            <button class="tab-btn active" onclick="switchView('table', this)">Таблица</button>
+            <button class="tab-btn" onclick="switchView('cards', this)">Карточки</button>
+        </div>
+
+        <!-- Панель для таблицы -->
+        <div id="table-toolbar-right" class="table-toolbar-right">
+            <div class="filter-wrapper">
+                <button onclick="toggleFilterPanel()" class="filter-button">
+                    <!-- Иконка фильтра -->
+                    <svg width="16px" height="16px" viewBox="0 0 24 24" fill="none"
+                         xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 3H5C3.6 3 2.9 3 2.4 3.4C2 3.8 2 4.5 2 5.8V6.5C2 7.5 2 8.1 2.26 8.49C2.52 8.92 3 9.19 3.94 9.72L6.85 11.36C7.49 11.72 7.81 11.9 8.04 12.1C8.51 12.51 8.8 12.99 8.94 13.59C9 13.87 9 14.21 9 14.87V17.54C9 18.45 9 18.91 9.25 19.26C9.5 19.62 9.95 19.79 10.85 20.14C12.72 20.88 13.66 21.24 14.33 20.82C15 20.41 15 19.45 15 17.54V14.87C15 14.21 15 13.87 15.06 13.59C15.2 12.99 15.49 12.51 15.96 12.1C16.19 11.9 16.51 11.72 17.15 11.36L20.06 9.72C21 9.19 21.48 8.92 21.74 8.49C22 8.06 22 7.54 22 6.5V5.81C22 4.49 22 3.82 21.56 3.41C21.12 3 20.41 3 19 3Z"
+                              stroke="#d76b49" stroke-width="1.5"></path>
+                    </svg>
+                </button>
+
+                <div id="filter-panel" class="filter-panel" style="display: none;">
+                    <input type="text" id="searchInput" placeholder="Поиск..." onkeyup="filterPatients()">
+                    <div class="column-controls">
+                        <label><input type="checkbox" checked onchange="toggleColumn(2)"> Дата рождения</label>
+                        <label><input type="checkbox" checked onchange="toggleColumn(3)"> Пол</label>
+                        <label><input type="checkbox" checked onchange="toggleColumn(4)"> Рост</label>
+                        <label><input type="checkbox" checked onchange="toggleColumn(5)"> Вес</label>
+                        <label><input type="checkbox" checked onchange="toggleColumn(6)"> Группа крови</label>
+                    </div>
+                </div>
+                <button class="add_patitnts" onclick="location.href='{% url 'add_patient' %}'">
+                    + Добавить пациента
+                </button>
+            </div>
+        </div>
+
+        <!-- Панель для карточек -->
+        <div id="card-toolbar-right" class="table-toolbar-right" style="display: none;">
+            <div class="filter-wrapper">
+                <input type="text" id="searchCardInput" placeholder="Поиск..." onkeyup="filterPatients()">
+                <button class="add_patitnts" onclick="location.href='{% url 'add_patient' %}'">
+                    + Добавить пациента
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Табличный вид -->
+    <div id="table-view">
+        <table id="patientTable">
+            <thead>
+            <tr>
+                <th><input type="checkbox" id="select-all" onchange="toggleAllRows(this)"></th>
+                <th class="sortable" onclick="sortTable(this)" data-col="1">ФИО</th>
+                <th class="sortable" onclick="sortTable(this)" data-col="2">Дата рождения</th>
+                <th class="sortable" onclick="sortTable(this)" data-col="3">Пол</th>
+                <th class="sortable" onclick="sortTable(this)" data-col="4">Рост</th>
+                <th class="sortable" onclick="sortTable(this)" data-col="5">Вес</th>
+                <th class="sortable" onclick="sortTable(this)" data-col="6">Группа крови</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for p in patients %}
+                <tr data-id="{{ p.patient_id }}" onclick="goToPatientCabinet({{ p.patient_id }})" style="cursor: pointer;">
+                    <td>
+                        <div class="checkbox-wrapper" onclick="event.stopPropagation()">
+                            <input type="checkbox" class="row-checkbox" onchange="updateBatchPanel()">
+                        </div>
+                    </td>
+                    <td>
+                        <div class="photo-name">
+                            {% if p.patient_photo %}
+                                <img src="{{ p.patient_photo.url }}" alt="Фото">
+                            {% else %}
+                                <img src="https://via.placeholder.com/36" alt="Нет фото">
+                            {% endif %}
+                            <span>{{ p.patient_name }}</span>
+                        </div>
+                    </td>
+                    <td>{{ p.patient_birthday }}</td>
+                    <td>{{ p.patient_gender }}</td>
+                    <td>{{ p.patient_height }}</td>
+                    <td>{{ p.patient_weight }}</td>
+                    <td>{{ p.patient_blood_type }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Карточки -->
+    <div id="card-view" style="display: none;">
+        <div class="card-container">
+            {% for p in patients %}
+               <div class="patient-card {% if p.patient_gender == 'мужской' %}male{% else %}female{% endif %}" onclick="goToPatientCabinet({{ p.patient_id }})" style="cursor: pointer;">
+                    <div class="gender-corner" onclick="event.stopPropagation(); this.classList.toggle('active');"></div>
+                    {% if p.patient_photo %}
+                        <img class="patient-photo" src="{{ p.patient_photo.url }}" alt="Фото пациента">
+                    {% else %}
+                        <img class="patient-photo" src="https://via.placeholder.com/100" alt="Нет фото">
+                    {% endif %}
+                    <h3>{{ p.patient_name }}</h3>
+                    <p><strong>Дата рождения:</strong> {{ p.patient_birthday }}</p>
+                    <p> {{ p.patient_height }} см × {{ p.patient_weight }} кг</p>
+                    <p><strong>Группа крови:</strong> {{ p.patient_blood_type }}</p>
+                </div>
+
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Плавающая панель массовых действий -->
+    <div id="batch-panel" class="batch-panel" style="display:none;">
+        <span id="selected-count">0 выбрано</span>
+        <button onclick="batchDelete()">Удалить</button>
+        <button onclick="batchPrint()">Печать</button>
+        <button onclick="batchSend()">Отправить</button>
+    </div>
+
+</div>
+{% block scripts %}
+    <script src="{% static 'JavaScript/patient.js' %}"></script>
+{% endblock %}
+
+{% endblock %}

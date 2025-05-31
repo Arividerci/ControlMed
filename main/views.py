@@ -1,0 +1,292 @@
+from .models import Patient, MedicalStaff, MedicalBook, Hospitalization, Purpose
+from .forms import RegisterStep1Form, RegisterStep2Form, LoginForm, AddPatientForm,  HospitalizationForm, PurposeForm
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect,  get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponseForbidden
+
+import os
+import json
+import traceback
+import datetime
+
+from django.http import JsonResponse
+
+def home(request):
+    return render(request, 'main/home.html')
+
+@login_required
+def cabinet(request):
+    return render(request, 'main/cabinet.html')
+
+@login_required
+def appointments(request):
+    return render(request, 'main/appointments.html')
+
+@login_required
+def patients(request):
+    all_patients = Patient.objects.all()
+    return render(request, 'main/patients.html', {'patients': all_patients})
+
+@login_required
+def add_patient(request):
+    if request.method == 'POST':
+        form = AddPatientForm(request.POST, request.FILES) 
+        if form.is_valid():
+            patient = form.save()
+            MedicalBook.objects.create(patient=patient)
+            return redirect('patients')
+    else:
+        form = AddPatientForm()
+    return render(request, 'main/add_patient.html', {'form': form})
+
+@csrf_exempt
+def delete_patient(request, patient_id):
+    if request.method == 'POST':
+        try:
+            patient = get_object_or_404(Patient, pk=patient_id)
+            patient.delete()
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+
+
+@csrf_exempt
+def delete_selected_patients(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            ids = data.get('ids', [])
+            if not isinstance(ids, list):
+                return JsonResponse({'success': False, 'error': 'Invalid ID list'}, status=400)
+
+            # Удаление пациентов
+            Patient.objects.filter(patient_id__in=ids).delete()
+
+            return JsonResponse({'success': True})
+        except Exception as e:
+            # Вывод ошибки в консоль контейнера
+            traceback.print_exc()
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def remove_patient_photo(request, patient_id):
+    if request.method == 'POST':
+        try:
+            patient = get_object_or_404(Patient, pk=patient_id)
+            if patient.patient_photo:
+                patient.patient_photo.delete(save=False)  # удалить физически
+                patient.patient_photo = 'no-photo.webp'  # путь к фото по умолчанию
+                patient.save()
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+def register_step1(request):
+
+    if not request.user.is_authenticated:
+        return redirect('login')
+
+    try:
+        staff = MedicalStaff.objects.get(user=request.user)
+        if staff.medical_staff_post != 'Главврач':
+            return HttpResponseForbidden("Доступ запрещён. Только главврач может регистрировать пользователей.")
+    except MedicalStaff.DoesNotExist:
+        return HttpResponseForbidden("Доступ запрещён. Только медперсонал может регистрировать пользователей.")
+    
+    if request.method == 'POST':
+        form = RegisterStep1Form(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+
+            request.session['reg_login'] = username
+            request.session['reg_email'] = email
+            request.session['reg_password'] = password
+
+            return redirect('register_step2')
+    else:
+        form = RegisterStep1Form()
+    return render(request, 'main/register_step1.html', {'form': form})
+
+@login_required
+def register_step2(request):
+    if request.method == 'POST':
+        form = RegisterStep2Form(request.POST)
+        if form.is_valid():
+            login_value = request.session.get('reg_login')
+            email = request.session.get('reg_email')  
+            password = request.session.get('reg_password')
+
+            if not (login_value and email and password):
+                return redirect('register_step1')
+
+            user, created = User.objects.get_or_create(username=login_value)
+            if created:
+                user.set_password(password)
+                user.email = email 
+
+                full_name = form.cleaned_data['medical_staff_name'].strip()
+                name_parts = full_name.split()
+
+                if len(name_parts) >= 2:
+                    user.last_name = name_parts[0]              
+                    user.first_name = name_parts[1]             
+                if len(name_parts) == 3:
+                    user.first_name += f" {name_parts[2]}"
+
+                user.save()
+
+            if not MedicalStaff.objects.filter(medical_staff_name=form.cleaned_data['medical_staff_name']).exists():
+                MedicalStaff.objects.create(
+                    user=user,
+                    medical_staff_name=form.cleaned_data['medical_staff_name'],
+                    medical_staff_birthday=form.cleaned_data['medical_staff_birthday'],
+                    medical_staff_gender=form.cleaned_data['medical_staff_gender'],
+                    medical_staff_post=form.cleaned_data['medical_staff_post'],
+                    medical_staff_specialisation=form.cleaned_data['medical_staff_specialisation'],
+                )
+
+            login(request, user)
+            request.session.pop('reg_login', None)
+            request.session.pop('reg_password', None)
+            request.session.pop('reg_email', None)  
+
+            return redirect('cabinet')
+        else:
+            print('Ошибки валидации формы:', form.errors)
+    else:
+        form = RegisterStep2Form()
+
+    return render(request, 'main/register_step2.html', {'form': form})
+
+@login_required
+def cabinet(request):
+    try:
+        staff = MedicalStaff.objects.get(user=request.user)
+    except MedicalStaff.DoesNotExist:
+        staff = None
+    return render(request, 'main/cabinet.html', {'staff': staff})
+
+@login_required
+def patients(request):
+    all_patients = Patient.objects.all()
+    return render(request, 'main/patients.html', {'patients': all_patients})
+
+
+def login_view(request):
+    error_message = None
+
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            user = authenticate(request, username=username, password=password)
+
+            if user is not None:
+                login(request, user)
+                return redirect('cabinet')  # перенаправим в личный кабинет
+            else:
+                error_message = "Неверный логин или пароль"
+    else:
+        form = LoginForm()
+
+    return render(request, 'main/login.html', {'form': form, 'error_message': error_message})
+
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404, redirect
+import datetime
+from .models import Patient, Hospitalization, Purpose
+from .forms import HospitalizationForm, PurposeForm
+
+
+@login_required
+def patient_detail(request, patient_id):
+    patient = get_object_or_404(Patient, pk=patient_id)
+    active_tab = request.GET.get('tab', 'main')
+
+    if request.method == 'POST':
+        form_type = request.POST.get('form_type')
+
+        if form_type == 'patient':
+            patient.patient_name = ' '.join([
+                request.POST.get('last_name', ''),
+                request.POST.get('first_name', ''),
+                request.POST.get('patronymic', '')
+            ])
+            patient.patient_birthday = request.POST.get('birthday')
+            patient.patient_gender = request.POST.get('gender')
+            patient.patient_height = request.POST.get('height')
+            patient.patient_weight = request.POST.get('weight')
+            patient.patient_blood_type = request.POST.get('blood_type')
+
+            if 'photo' in request.FILES:
+                patient.patient_photo = request.FILES['photo']
+
+            patient.save()
+            return redirect('patient_detail', patient_id=patient_id)
+
+        elif form_type == 'hospitalization':
+            form = HospitalizationForm(request.POST)
+            if form.is_valid():
+                hosp = form.save(commit=False)
+                hosp.patient = patient
+
+                try:
+                    hosp.medical_staff = MedicalStaff.objects.get(user=request.user)
+                except MedicalStaff.DoesNotExist:
+                    messages.error(request, "Вы не привязаны к медперсоналу.")
+                    return redirect('patient_detail', patient_id=patient_id)
+
+                hosp.save()
+                return redirect(f'/patients/{patient_id}/?tab=hospitalization')
+
+        elif form_type == 'purpose':
+            form = PurposeForm(request.POST)
+            if form.is_valid():
+                purp = form.save(commit=False)
+                purp.patient = patient
+
+                try:
+                    purp.medical_staff = MedicalStaff.objects.get(user=request.user)
+                except MedicalStaff.DoesNotExist:
+                    messages.error(request, "Вы не привязаны к медперсоналу.")
+                    return redirect(f'/patients/{patient_id}/?tab=purpose')
+
+                hospitalization_id = request.POST.get('hospitalization')
+                try:
+                    purp.hospitalization = Hospitalization.objects.get(pk=hospitalization_id)
+                except Hospitalization.DoesNotExist:
+                    messages.error(request, "Госпитализация не найдена.")
+                    return redirect(f'/patients/{patient_id}/?tab=purpose')
+
+                purp.save()
+                return redirect(f'/patients/{patient_id}/?tab=purpose')
+
+    today = datetime.date.today()
+    hospitalization = Hospitalization.objects.filter(
+        patient_id=patient_id,
+        hospitalization_startdate__lte=today,
+        hospitalization_enddate__gte=today
+    ).first()
+
+    return render(request, 'main/patient_detail.html', {
+    'patient': patient,
+    'hospitalization': hospitalization,
+    'form': HospitalizationForm(),
+    'purpose_form': PurposeForm(),
+    'active_tab': active_tab,
+    'hospitalizations': Hospitalization.objects.filter(patient=patient),
+    'medical_staff': MedicalStaff.objects.all()
+})
+

@@ -1,0 +1,18 @@
+{% extends "main/base.html" %}
+
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+<h2>Личный кабинет</h2>
+{% if staff %}
+    <p><strong>ФИО:</strong> {{ staff.medical_staff_name }}</p>
+    <p><strong>Дата рождения:</strong> {{ staff.medical_staff_birthday }}</p>
+    <p><strong>Пол:</strong> {{ staff.medical_staff_gender }}</p>
+    <p><strong>Должность:</strong> {{ staff.medical_staff_post }}</p>
+    <p><strong>Специализация:</strong> {{ staff.medical_staff_specialisation }}</p>
+    <p><strong>Отделение:</strong> {{ staff.medical_staff_department }}</p>
+{% else %}
+    <p>Информация не найдена.</p>
+{% endif %}
+
+{% endblock %}

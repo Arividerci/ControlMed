@@ -1,0 +1,29 @@
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'CSS/login.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="login-wrapper">
+    <div class="login-box">
+        <div class="login-header">
+            <img src="{% static 'images/login-header_1.webp' %}" alt="Login header">
+            <h2>Вход</h2>
+        </div>
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+            <div class="input-group">
+                <label for="id_username">Логин</label>
+                <input type="text" name="username" id="id_username" placeholder="Введите логин" required>
+            </div>
+            <div class="input-group">
+                <label for="id_password">Пароль</label>
+                <input type="password" name="password" id="id_password" placeholder="Введите пароль" required>
+            </div>
+            <button type="submit" class="login-btn">Войти</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

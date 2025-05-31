@@ -1,0 +1,195 @@
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f9fafd;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; 
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+main {
+  flex: 1;
+}
+
+footer {
+  background-color: #00626f; 
+  color: white;
+  padding: 15px 25px;
+}
+
+.site-header {
+    background-color: #00626f; /* насыщенный синий */
+    color: white;
+    padding: 15px 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.site-header .container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo h1 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 1.8rem;
+    letter-spacing: 2px;
+}
+
+.logo h1 a {
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.logo h1 a:hover,
+.main-nav ul li a:focus {
+    outline: none;
+}
+
+
+
+
+
+/* Навигация */
+.main-nav ul {
+  font-size: 18px;
+  list-style: none;
+  margin: 0;
+  padding-top: 50px; 
+  padding-left: 25px; 
+}
+.main-nav ul li{
+  padding-bottom: 20px;
+}
+
+.main-nav ul li a:hover,
+.main-nav ul li a:focus {
+  color: #ff7a52; 
+  outline: none;
+}
+/* Шторка справа */
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 40px;
+  background-color: rgb(0, 75, 85);
+  transition: width 0.3s ease;
+  overflow-x: hidden;
+  box-shadow: -2px 0 5px rgba(0,0,0,0.3);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column; 
+  align-items: flex-start;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+/* Раскрытие шторки */
+.sidebar:hover {
+     background: rgb(0, 75, 85);
+  width: 300px;
+}
+
+.toggle-icon {
+  width: 320px;
+  height: 40px;
+  background: linear-gradient(to right, rgb(0, 70, 79), rgb(1, 110, 130));
+  cursor: pointer;
+  text-align: start;
+  line-height: 40px;
+  font-weight: bold;
+  font-size: 24px;
+  user-select: none;
+  border-bottom: 1px solid #16232f;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+  padding-left: 12px;
+}
+
+/* Контент внутри шторки */
+.sidebar-content {
+  height: 100%; 
+  padding: 60px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.sidebar-content a {
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+/* Показываем контент при наведении */
+.sidebar:hover .sidebar-content {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sidebar-content li {
+  margin-bottom: 15px;
+}
+
+.sidebar-content li a{
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* Стили формы */
+.sidebar-content form input {
+  width: 90%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  border: none;
+}
+
+
+.bottom-menu form {
+  margin-top: auto; 
+  padding: 10px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.bottom-menu button {
+  background-color: #d76b49;
+  border: none;
+  color: #ffffff;
+  font-weight: bold;
+  padding: 10px 20px;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 140px;
+  height: 40px;
+}
+
+.bottom-menu button:hover {
+  background-color: #ffffff;
+  color: #d76b49;
+  transition: background-color 0.3s ease;
+}
+
