@@ -34,7 +34,7 @@ footer {
 }
 
 .site-header {
-    background-color: #00626f; /* насыщенный синий */
+    background-color: #00626f; 
     color: white;
     padding: 15px 0;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -68,11 +68,6 @@ footer {
     outline: none;
 }
 
-
-
-
-
-/* Навигация */
 .main-nav ul {
   font-size: 18px;
   list-style: none;
@@ -89,7 +84,7 @@ footer {
   color: #ff7a52; 
   outline: none;
 }
-/* Шторка справа */
+
 .sidebar {
   position: fixed;
   top: 0;
@@ -102,10 +97,11 @@ footer {
   box-shadow: -2px 0 5px rgba(0,0,0,0.3);
   z-index: 10000;
   display: flex;
-  flex-direction: column; 
+  flex-direction: column;
   align-items: flex-start;
   color: white;
   font-family: Arial, sans-serif;
+  justify-content: space-between; 
 }
 
 /* Раскрытие шторки */
@@ -130,7 +126,7 @@ footer {
   padding-left: 12px;
 }
 
-/* Контент внутри шторки */
+
 .sidebar-content {
   height: 100%; 
   padding: 60px;
@@ -150,12 +146,11 @@ footer {
   font-weight: 600;
   transition: color 0.3s ease;
 }
-/* Показываем контент при наведении */
+
 .sidebar:hover .sidebar-content {
   opacity: 1;
   pointer-events: auto;
 }
-
 .sidebar-content li {
   margin-bottom: 15px;
 }
@@ -175,14 +170,21 @@ footer {
   border: none;
 }
 
-
-.bottom-menu form {
-  margin-top: auto; 
-  padding: 10px;
+.bottom-menu {
+  margin-top: auto;  
   width: 100%;
   display: flex;
   justify-content: center;
+  padding-bottom: 20px; 
 }
+
+.bottom-menu form {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+}
+
 .bottom-menu button {
   background-color: #d76b49;
   border: none;
@@ -201,4 +203,3 @@ footer {
   color: #d76b49;
   transition: background-color 0.3s ease;
 }
-

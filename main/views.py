@@ -44,7 +44,7 @@ def appointments_view(request):
         purpose_status__in=['Активный', 'Приостановлен']
     ).select_related('hospitalization', 'hospitalization__patient')
 
-    return render(request, 'main/appointments_list.html', {
+    return render(request, 'main/appointments.html', {
         'appointments': appointments
     })
 
@@ -555,3 +555,29 @@ def procedures_view(request):
 def medications_view(request):
     # Пока можно просто вернуть пустой шаблон или добавить свою логику
     return render(request, 'main/medications.html')
+@login_required
+def assignments_view(request):
+    try:
+        staff = MedicalStaff.objects.get(user=request.user)
+    except MedicalStaff.DoesNotExist:
+        assignments = []
+    else:
+        if staff.medical_staff_post == 'Главврач':
+            assignments = Purpose.objects.filter(
+                purpose_status__in=['Активный', 'Приостановлен']
+            ).select_related('hospitalization', 'hospitalization__patient')
+        else:
+            assignments = Purpose.objects.filter(
+                hospitalization__medical_staff=staff,
+                purpose_status__in=['Активный', 'Приостановлен']
+            ).select_related('hospitalization', 'hospitalization__patient')
+
+    return render(request, 'main/assignments.html', {
+        'assignments': assignments,
+        'active_page': 'purpose',  # для подсветки меню
+    })
+
+def hospitalizations_view(request):
+    hospitalizations = Hospitalization.objects.all()  # или другой фильтр
+    return render(request, 'main/hospitalizations.html', {'hospitalizations': hospitalizations})
+

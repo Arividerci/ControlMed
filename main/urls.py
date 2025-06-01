@@ -25,13 +25,12 @@ urlpatterns = [
     path('patients/<int:patient_id>/purpose/save/', views.save_purpose_row, name='save_purpose_row'),
     path('patients/<int:patient_id>/purpose/delete/<int:purpose_id>/', views.delete_purpose_row, name='delete_purpose_row'),
     path('patients/<int:patient_id>/medbook/', views.patient_medbook, name='patient_medbook'),
+    path('patients/<int:patient_id>/medbook/comment/<int:content_id>/update/',views.update_medical_book_comment, name='update_medical_book_comment' ),
+    path('assignments/', views.assignments_view, name='assignments'),
+    path('hospitalizations/', views.hospitalizations_view, name='hospitalizations'),
     path('procedures/', views.procedures_view, name='procedures'),
     path('medications/', views.medications_view, name='medications'),
-    path('patients/<int:patient_id>/medbook/comment/<int:content_id>/update/',views.update_medical_book_comment, name='update_medical_book_comment' ),
-
-
-
-
+ 
 
 ]
 

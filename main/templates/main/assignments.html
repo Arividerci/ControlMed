@@ -1,0 +1,101 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Задания{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'CSS/patient_detail.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="patient-layout">
+    {% include 'main/assignments_sidebar.html' %}
+
+    <div class="patient-content">
+        <h2>Задания</h2>
+        
+        {% if assignments %}
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Пациент</th>
+                    <th>Дата начала</th>
+                    <th>Длительность</th>
+                    <th>Статус</th>
+                    <th>Диагноз</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in assignments %}
+                <tr>
+                    <td>{{ a.hospitalization.patient.patient_name }}</td>
+                    <td>{{ a.purpose_startdate|date:"d.m.Y" }}</td>
+                    <td>{{ a.purpose_duration }}</td>
+                    <td>{{ a.purpose_status }}</td>
+                    <td>{{ a.purpose_diagnosis }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p>Заданий нет.</p>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.patient-layout {
+    display: flex;
+    gap: 20px;
+}
+
+.patient-sidebar {
+    width: 220px;
+    background: #f0f4f8;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 5px #ccc;
+}
+
+.patient-sidebar-item {
+    display: block;
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    color: #004d5f;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+.patient-sidebar-item.active,
+.patient-sidebar-item:hover {
+    background: #d76b49;
+    color: white;
+}
+
+.patient-content {
+    flex: 1;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px #ddd;
+}
+
+.styled-table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.styled-table th, .styled-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+.styled-table th {
+    background-color: #d76b49;
+    color: white;
+    text-align: left;
+}
+</style>
+
+{% endblock %}
