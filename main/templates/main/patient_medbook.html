@@ -44,17 +44,12 @@
                             {% endfor %}
                         </ul>
 
-                        {% if entry.medical_book_content_id %}
-                            <form method="post" action="{% url 'update_medical_book_comment' patient_id=patient.patient_id content_id=entry.medical_book_content_id %}">
-                                {% csrf_token %}
-                                <label for="comment-{{ entry.medical_book_content_id }}"><strong>Комментарий к диагнозу:</strong></label><br>
-                                <textarea id="comment-{{ entry.medical_book_content_id }}" name="comment" rows="4" cols="50">{{ entry.medical_book_content_notes|default_if_none:"" }}</textarea><br>
-                                <button type="submit" class="comment-button">Обновить комментарий</button>
-                            </form>
-                        {% else %}
-                            <p>Ошибка: отсутствует ID комментария для обновления.</p>
-                        {% endif %}
-
+                        <form method="post" action="{% url 'update_medical_book_comment' patient_id=patient.patient_id content_id=entry.medical_book_content_id %}">
+                            {% csrf_token %}
+                            <label for="comment-{{ entry.medical_book_content_id }}"><strong>Комментарий к диагнозу:</strong></label><br>
+                            <textarea id="comment-{{ entry.medical_book_content_id }}" name="comment" rows="4" cols="50">{{ entry.medical_book_content_notes|default_if_none:"" }}</textarea><br>
+                            <button type="submit" class="comment-button">Обновить комментарий</button>
+                        </form>
                     </div>
                     <hr class="entry-divider">
                 {% endfor %}

@@ -10,10 +10,14 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseForbidden, JsonResponse
 from datetime import date, timedelta
 from django.views.decorators.http import require_POST
+from django.db.models import Count, Q
+from django.db import transaction
+
 
 import os
 import json
 import traceback
+
 
 def root_redirect(request):
     if request.user.is_authenticated:
@@ -47,6 +51,31 @@ def appointments_view(request):
     return render(request, 'main/appointments.html', {
         'appointments': appointments
     })
+
+@login_required
+def add_hospitalization(request, patient_id):
+    patient = Patient.objects.get(pk=patient_id)
+
+    # Ищем медсестру с наименьшим количеством госпитализаций
+    nurse = MedicalStaff.objects.filter(medical_staff_post="Медсестра").annotate(num_hospitals=Count('hospitalization')).order_by('num_hospitals').first()
+
+    if request.method == 'POST':
+        start_date = request.POST['hospitalization_startdate']
+        end_date = request.POST['hospitalization_enddate']
+        room = request.POST['hospitalization_room']
+        
+        # Создаем госпитализацию и назначаем медсестру
+        hospitalization = Hospitalization.objects.create(
+            hospitalization_startdate=start_date,
+            hospitalization_enddate=end_date,
+            hospitalization_room=room,
+            medical_staff=nurse,  # Закрепляем медсестру с наименьшим количеством госпитализаций
+            patient=patient
+        )
+
+        return redirect('patient_detail', patient_id=patient.id)
+
+    return render(request, 'main/add_hospitalization.html', {'patient': patient})
 
 @login_required
 def add_patient(request):
@@ -360,10 +389,15 @@ def patient_hospitalization(request, patient_id):
 def patient_purpose(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)
     purposes = Purpose.objects.filter(hospitalization__patient=patient)
+
+    # Фильтруем только назначения для врача
+    purposes_for_doctor = purposes.exclude(medical_staff__medical_staff_post__in=['Медсестра', 'Медбрат'])
+
+    # Получаем все медикаменты и процедуры
     medications = Medication.objects.all()
     procedures = Procedures.objects.all()
 
-    # Найдём активную госпитализацию
+    # Найдем активную госпитализацию
     hospitalization = Hospitalization.objects.filter(
         patient=patient,
         hospitalization_startdate__lte=date.today(),
@@ -376,17 +410,14 @@ def patient_purpose(request, patient_id):
     except MedicalStaff.DoesNotExist:
         medical_staff = None
 
-    # Обработка POST (если создаётся новое назначение)
+    # Обработка POST для создания нового назначения
     if request.method == 'POST':
         form = PurposeForm(request.POST)
         if form.is_valid():
             purpose = form.save(commit=False)
             purpose.medical_staff = medical_staff
             purpose.hospitalization = hospitalization
-            purpose.purpose_status = (
-                "Активный" if purpose.purpose_startdate + timedelta(days=purpose.purpose_duration) >= date.today()
-                else "Завершено"
-            )
+            purpose.purpose_status = "Активный" if purpose.purpose_startdate + timedelta(days=purpose.purpose_duration) >= date.today() else "Завершено"
             purpose.save()
             return redirect('patient_purpose', patient_id=patient_id)
     else:
@@ -409,7 +440,7 @@ def patient_purpose(request, patient_id):
     return render(request, 'main/patient_purpose.html', {
         'patient': patient,
         'form': form,
-        'purposes': purposes,
+        'purposes': purposes_for_doctor,  # Выводим только назначения для врачей
         'medications': medications,
         'procedures': procedures,
         'medications_selected': medications_selected,
@@ -417,20 +448,41 @@ def patient_purpose(request, patient_id):
         'active_page': 'purpose',
     })
 
+
 @csrf_exempt
 @login_required
 def delete_purpose_row(request, patient_id, purpose_id):
     if request.method == 'POST':
         try:
+            # Получаем назначение для врача
             purpose = get_object_or_404(Purpose, pk=purpose_id)
+            
+            # Удаляем все связанные медикаменты и процедуры для назначения
             IncludesReception.objects.filter(purpose=purpose).delete()
             IncludesConducting.objects.filter(purpose=purpose).delete()
+
+            # Найдем назначение для медсестры/медбрата с тем же госпитализацией и датой
+            nurse_purpose = Purpose.objects.filter(
+                hospitalization=purpose.hospitalization,
+                purpose_startdate=purpose.purpose_startdate,
+            ).exclude(purpose_id=purpose.purpose_id).filter(
+                Q(medical_staff__medical_staff_post='Медсестра') | Q(medical_staff__medical_staff_post='Медбрат')
+            ).first()
+
+            # Если назначение для медсестры/медбрата найдено, удаляем его
+            if nurse_purpose:
+                IncludesReception.objects.filter(purpose=nurse_purpose).delete()
+                IncludesConducting.objects.filter(purpose=nurse_purpose).delete()
+                nurse_purpose.delete()
+
+            # Удаляем назначение для врача
             purpose.delete()
+
             return JsonResponse({'success': True})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
-    return JsonResponse({'success': False, 'error': 'Invalid request'})
 
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
 @csrf_exempt
 @login_required
 def save_purpose_row(request, patient_id):
@@ -438,11 +490,11 @@ def save_purpose_row(request, patient_id):
         try:
             data = json.loads(request.body)
             purpose_id = data.get('id')
-
-            # Получаем медперсонал
             medical_staff = MedicalStaff.objects.get(user=request.user)
 
-            # Получаем активную госпитализацию
+            # Получаем пациента
+            patient = get_object_or_404(Patient, pk=patient_id)
+
             hospitalization = Hospitalization.objects.filter(
                 patient_id=patient_id,
                 hospitalization_startdate__lte=date.today(),
@@ -452,47 +504,132 @@ def save_purpose_row(request, patient_id):
             if not hospitalization:
                 return JsonResponse({'success': False, 'error': 'Нет активной госпитализации'})
 
-            # Рассчитываем статус автоматически
             start_date = date.fromisoformat(data['startdate'])
             duration = int(data['duration'])
             calculated_status = "Активный" if start_date + timedelta(days=duration) >= date.today() else "Завершено"
             status = data.get('status') or calculated_status
 
-            # Обновление или создание назначения
-            if purpose_id:
-                purpose = Purpose.objects.get(pk=purpose_id)
-                purpose.purpose_startdate = start_date
-                purpose.purpose_duration = duration
-                purpose.purpose_diagnosis = data['diagnosis']
-                purpose.purpose_status = status
-                purpose.medical_staff = medical_staff
-                purpose.hospitalization = hospitalization
-                purpose.save()
+            with transaction.atomic():
+                if purpose_id:
+                    purpose = Purpose.objects.get(pk=purpose_id)
+                    purpose.purpose_startdate = start_date
+                    purpose.purpose_duration = duration
+                    purpose.purpose_diagnosis = data['diagnosis']
+                    purpose.purpose_status = status
+                    purpose.medical_staff = medical_staff
+                    purpose.hospitalization = hospitalization
+                    purpose.save()
 
-                # Удаляем старые связи
-                IncludesReception.objects.filter(purpose=purpose).delete()
-                IncludesConducting.objects.filter(purpose=purpose).delete()
-            else:
-                purpose = Purpose.objects.create(
-                    purpose_startdate=start_date,
-                    purpose_duration=duration,
-                    purpose_diagnosis=data['diagnosis'],
-                    purpose_status=status,
-                    medical_staff=medical_staff,
-                    hospitalization=hospitalization
-                )
+                    # Находим назначение медсестры/медбрата с таким же hospitalization и датой
+                    nurse_purpose = Purpose.objects.filter(
+                        hospitalization=hospitalization,
+                        purpose_startdate=purpose.purpose_startdate,
+                    ).exclude(purpose_id=purpose.purpose_id).filter(
+                        Q(medical_staff__medical_staff_post='Медсестра') | Q(medical_staff__medical_staff_post='Медбрат')
+                    ).first()
 
-            # Добавляем медикаменты
-            IncludesReception.objects.bulk_create([
-                IncludesReception(medication_id=med_id, purpose=purpose)
-                for med_id in data.get('medications', [])
-            ])
+                    if nurse_purpose:
+                        # Обновляем назначение медсестры
+                        nurse_purpose.purpose_startdate = start_date
+                        nurse_purpose.purpose_duration = duration
+                        nurse_purpose.purpose_diagnosis = data['diagnosis']
+                        nurse_purpose.purpose_status = status
+                        nurse_purpose.hospitalization = hospitalization
+                        nurse_purpose.save()
 
-            # Добавляем процедуры
-            IncludesConducting.objects.bulk_create([
-                IncludesConducting(procedures_id=proc_id, purpose=purpose)
-                for proc_id in data.get('procedures', [])
-            ])
+                    # Удаляем старые связи
+                    IncludesReception.objects.filter(Q(purpose=purpose) | Q(purpose=nurse_purpose)).delete()
+                    IncludesConducting.objects.filter(Q(purpose=purpose) | Q(purpose=nurse_purpose)).delete()
+
+                    # Создаем новые связи для врача
+                    IncludesReception.objects.bulk_create([ 
+                        IncludesReception(medication_id=med_id, purpose=purpose)
+                        for med_id in data.get('medications', [])
+                    ])
+                    IncludesConducting.objects.bulk_create([
+                        IncludesConducting(procedures_id=proc_id, purpose=purpose)
+                        for proc_id in data.get('procedures', [])
+                    ])
+
+                    # Создаём новые связи для медсестры
+                    if nurse_purpose:
+                        IncludesReception.objects.bulk_create([ 
+                            IncludesReception(medication_id=med_id, purpose=nurse_purpose)
+                            for med_id in data.get('medications', [])
+                        ])
+                        IncludesConducting.objects.bulk_create([
+                            IncludesConducting(procedures_id=proc_id, purpose=nurse_purpose)
+                            for proc_id in data.get('procedures', [])
+                        ])
+
+                    # Добавляем запись в медицинскую книгу для врача
+                    medical_book = MedicalBook.objects.get(patient=patient)
+                    if not MedicalBookContent.objects.filter(purpose=purpose).exists():
+                        medical_book_content = MedicalBookContent.objects.create(
+                            medicalbook=medical_book,
+                            purpose=purpose,
+                            medical_book_content_notes=f"Назначение: {purpose.purpose_diagnosis}; Начало: {purpose.purpose_startdate}; Длительность: {purpose.purpose_duration} дней; Статус: {purpose.purpose_status}"
+                        )
+                        print("Запись в медицинскую книгу добавлена для врача!")
+
+                else:
+                    purpose = Purpose.objects.create(
+                        purpose_startdate=start_date,
+                        purpose_duration=duration,
+                        purpose_diagnosis=data['diagnosis'],
+                        purpose_status=status,
+                        medical_staff=medical_staff,
+                        hospitalization=hospitalization
+                    )
+
+                    # Назначаем медсестру с минимальной нагрузкой
+                    nurse = MedicalStaff.objects.filter(medical_staff_post='Медсестра').annotate(
+                        num_purposes=Count('purpose')
+                    ).order_by('num_purposes').first()
+
+                    nurse_purpose = None
+                    if nurse:
+                        nurse_purpose = Purpose.objects.create(
+                            purpose_startdate=start_date,
+                            purpose_duration=duration,
+                            purpose_diagnosis=data['diagnosis'],
+                            purpose_status=status,
+                            medical_staff=nurse,
+                            hospitalization=hospitalization
+                        )
+
+                    # Создаем связи для врача
+                    IncludesReception.objects.bulk_create([ 
+                        IncludesReception(medication_id=med_id, purpose=purpose)
+                        for med_id in data.get('medications', [])
+                    ])
+                    IncludesConducting.objects.bulk_create([
+                        IncludesConducting(procedures_id=proc_id, purpose=purpose)
+                        for proc_id in data.get('procedures', [])
+                    ])
+
+                    # Создаем связи для медсестры
+                    if nurse_purpose:
+                        IncludesReception.objects.bulk_create([ 
+                            IncludesReception(medication_id=med_id, purpose=nurse_purpose)
+                            for med_id in data.get('medications', [])
+                        ])
+                        IncludesConducting.objects.bulk_create([
+                            IncludesConducting(procedures_id=proc_id, purpose=nurse_purpose)
+                            for proc_id in data.get('procedures', [])
+                        ])
+
+                        medical_book = MedicalBook.objects.get(patient=patient)
+
+                        # Убедимся, что не дублируем записи
+                        if not MedicalBookContent.objects.filter(purpose=purpose).exists():
+                            medical_book_content = MedicalBookContent.objects.create(
+                                medicalbook_id=medical_book.medicalbook_id, 
+                                purpose=purpose,
+                                medical_book_content_notes=f"Назначение: {purpose.purpose_diagnosis}; Начало: {purpose.purpose_startdate}; Длительность: {purpose.purpose_duration} дней; Статус: {purpose.purpose_status}"
+                            )
+                            print("Запись в медицинскую книгу добавлена для врача!")
+
 
             return JsonResponse({"success": True, "id": purpose.purpose_id})
 
@@ -555,29 +692,55 @@ def procedures_view(request):
 def medications_view(request):
     # Пока можно просто вернуть пустой шаблон или добавить свою логику
     return render(request, 'main/medications.html')
+
+from django.shortcuts import render
+from .models import Purpose, MedicalStaff
+from django.contrib.auth.decorators import login_required
+
 @login_required
 def assignments_view(request):
-    try:
-        staff = MedicalStaff.objects.get(user=request.user)
-    except MedicalStaff.DoesNotExist:
-        assignments = []
+    staff = MedicalStaff.objects.get(user=request.user)
+
+    # Для главного врача — все назначения
+    if staff.medical_staff_post == 'Главврач':
+        assignments = Purpose.objects.all().select_related('hospitalization', 'hospitalization__patient', 'hospitalization__medical_staff')
     else:
-        if staff.medical_staff_post == 'Главврач':
-            assignments = Purpose.objects.filter(
-                purpose_status__in=['Активный', 'Приостановлен']
-            ).select_related('hospitalization', 'hospitalization__patient')
-        else:
-            assignments = Purpose.objects.filter(
-                hospitalization__medical_staff=staff,
-                purpose_status__in=['Активный', 'Приостановлен']
-            ).select_related('hospitalization', 'hospitalization__patient')
+        # Для остальных — только активные и приостановленные назначения, назначенные текущим медицинским персоналом
+        assignments = Purpose.objects.filter(
+            purpose_status__in=['Активный', 'Приостановлен'],
+            hospitalization__medical_staff=staff  # Фильтрация по лечащему врачу
+        ).select_related('hospitalization', 'hospitalization__patient', 'hospitalization__medical_staff')
 
     return render(request, 'main/assignments.html', {
         'assignments': assignments,
-        'active_page': 'purpose',  # для подсветки меню
+        'staff': staff,
+        'active_page': 'purpose',
     })
+
 
 def hospitalizations_view(request):
     hospitalizations = Hospitalization.objects.all()  # или другой фильтр
     return render(request, 'main/hospitalizations.html', {'hospitalizations': hospitalizations})
 
+def export_assignments(request):
+    # Создание ответа с типом контента для CSV
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="assignments.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Пациент', 'Дата начала', 'Длительность', 'Статус', 'Диагноз', 'Лечащий врач'])
+
+    # Получаем все назначения для главного врача или для текущего сотрудника
+    assignments = Purpose.objects.all().select_related('hospitalization', 'hospitalization__patient', 'hospitalization__medical_staff')
+
+    for assignment in assignments:
+        writer.writerow([
+            assignment.hospitalization.patient.patient_name,
+            assignment.purpose_startdate,
+            assignment.purpose_duration,
+            assignment.purpose_status,
+            assignment.purpose_diagnosis,
+            assignment.hospitalization.medical_staff.medical_staff_name  # Лечащий врач
+        ])
+    
+    return response

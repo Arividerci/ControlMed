@@ -1,4 +1,3 @@
-
 function addMedicationSelect(button) {
     const wrapper = button.closest('.medications-wrapper');
 
@@ -64,6 +63,7 @@ function addProcedureSelect(button) {
     wrapper.insertBefore(div, button);
     markChanged(button);
 }
+
 
 function addRow() {
     const tbody = document.getElementById("purposesTable").querySelector("tbody");
@@ -188,6 +188,7 @@ function removeProcedureSelect(button) {
     wrapper.remove();
     markChanged(button);
 }
+
 
 function markChanged(el) {
     const row = el.closest('tr');

@@ -13,7 +13,13 @@
 
     <div class="patient-content">
         <h2>Задания</h2>
-        
+
+        {% if staff.medical_staff_post == 'Главврач' %}
+            <p>Вы видите все задания.</p>
+        {% else %}
+            <p>Вы видите только активные и приостановленные задания.</p>
+        {% endif %}
+
         {% if assignments %}
         <table class="styled-table">
             <thead>
@@ -23,6 +29,7 @@
                     <th>Длительность</th>
                     <th>Статус</th>
                     <th>Диагноз</th>
+                    <th>Лечащий врач</th> <!-- Новый столбец -->
                 </tr>
             </thead>
             <tbody>
@@ -33,10 +40,18 @@
                     <td>{{ a.purpose_duration }}</td>
                     <td>{{ a.purpose_status }}</td>
                     <td>{{ a.purpose_diagnosis }}</td>
+                    <td>{{ a.hospitalization.medical_staff.medical_staff_name }}</td> <!-- Лечащий врач -->
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+
+        <div class="export-button-container">
+            <form method="post" action="{% url 'export_assignments' %}">
+                {% csrf_token %}
+                <button type="submit" class="export-button">Экспортировать в CSV</button>
+            </form>
+        </div>
         {% else %}
             <p>Заданий нет.</p>
         {% endif %}
@@ -44,58 +59,28 @@
 </div>
 
 <style>
-.patient-layout {
+.export-button-container {
+    margin-top: 20px;
     display: flex;
-    gap: 20px;
+    justify-content: center;
 }
 
-.patient-sidebar {
-    width: 220px;
-    background: #f0f4f8;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 5px #ccc;
-}
-
-.patient-sidebar-item {
-    display: block;
-    padding: 10px 15px;
-    margin-bottom: 8px;
-    color: #004d5f;
-    font-weight: 600;
-    text-decoration: none;
-    border-radius: 5px;
-}
-
-.patient-sidebar-item.active,
-.patient-sidebar-item:hover {
-    background: #d76b49;
-    color: white;
-}
-
-.patient-content {
-    flex: 1;
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px #ddd;
-}
-
-.styled-table {
-    border-collapse: collapse;
-    width: 100%;
-}
-
-.styled-table th, .styled-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-}
-
-.styled-table th {
+.export-button {
     background-color: #d76b49;
+    border: none;
     color: white;
-    text-align: left;
+    font-weight: bold;
+    padding: 10px 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 200px;
+    text-align: center;
+}
+
+.export-button:hover {
+    background-color: #ffffff;
+    color: #d76b49;
 }
 </style>
-
 {% endblock %}

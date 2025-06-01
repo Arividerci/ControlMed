@@ -87,7 +87,7 @@
                         </select>
                     </td>
                     <td>
-                        {% if user_role == "Врач" or user_role == "Главрач"%}
+                        {% if user_role != "Медсестра" and user_role != "Медбрат"%}
                             <div class="but-sd">
                                 <button class="save-button" onclick="saveRow(this)" disabled>Сохранить</button>
                                 <button class="delete-button" onclick="deleteRow(this)">Удалить</button>
@@ -99,7 +99,7 @@
             </tbody>
         </table>
         </div>
-        {% if user_role == "Врач" or user_role == "Главрач"%}
+        {% if user_role != "Медсестра" and user_role != "Медбрат"%}
             <div style="margin-top: 20px;">
                 <button class="small-button" onclick="addRow()">+ Добавить назначение</button>
             </div>

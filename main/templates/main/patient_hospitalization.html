@@ -1,6 +1,7 @@
 {% extends 'main/base.html' %}
 {% block title %}Госпитализация пациента{% endblock %}
 {% load static %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'CSS/patient_detail.css' %}">
 {% endblock %}
@@ -18,7 +19,6 @@
                 {% else %}
                     <p class="patient-id">Статус: <strong style="color: gray">Неактивна</strong></p>
                 {% endif %}
-
             </div>
         </div>
 
@@ -32,8 +32,6 @@
                     <input type="number"
                            name="hospitalization_room"
                            id="id_hospitalization_room"
-                           value="{{ form.hospitalization_room.value }}"
-                           data-original="{{ form.hospitalization_room.value }}"
                            class="form-control" />
                 </div>
 
@@ -42,8 +40,6 @@
                     <input type="date"
                            name="hospitalization_startdate"
                            id="id_hospitalization_startdate"
-                           value="{{ form.hospitalization_startdate.value|date:'Y-m-d' }}"
-                           data-original="{{ form.hospitalization_startdate.value|date:'Y-m-d' }}"
                            class="form-control" />
                 </div>
 
@@ -52,8 +48,6 @@
                     <input type="date"
                            name="hospitalization_enddate"
                            id="id_hospitalization_enddate"
-                           value="{{ form.hospitalization_enddate.value|date:'Y-m-d'  }}"
-                           data-original="{{ form.hospitalization_enddate.value|date:'Y-m-d'  }}"
                            class="form-control" />
                 </div>
             </div>
