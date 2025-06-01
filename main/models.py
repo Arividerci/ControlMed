@@ -128,21 +128,29 @@ class ProceduresExecution(models.Model):
         unique_together = (('procedures', 'medical_staff'),)
 
 class IncludesReception(models.Model):
-    medication = models.ForeignKey(Medication, on_delete=models.RESTRICT, db_column='medication_id')
+    medication = models.ForeignKey(
+        Medication, on_delete=models.RESTRICT, db_column='medication_id', primary_key=True
+    )
     purpose = models.ForeignKey(Purpose, on_delete=models.RESTRICT, db_column='purpose_id')
+
+    def save(self, *args, **kwargs):
+        raise NotImplementedError("Нельзя использовать save(). Используй bulk_create.")
 
     class Meta:
         db_table = 'includes_reception'
         managed = False
         unique_together = (('medication', 'purpose'),)
-        default_permissions = ()
 
 class IncludesConducting(models.Model):
-    procedures = models.ForeignKey(Procedures, on_delete=models.RESTRICT, db_column='procedures_id')
+    procedures = models.ForeignKey(
+        Procedures, on_delete=models.RESTRICT, db_column='procedures_id', primary_key=True
+    )
     purpose = models.ForeignKey(Purpose, on_delete=models.RESTRICT, db_column='purpose_id')
+
+    def save(self, *args, **kwargs):
+        raise NotImplementedError("Нельзя использовать save(). Используй bulk_create.")
 
     class Meta:
         db_table = 'includes_conducting'
         managed = False
         unique_together = (('procedures', 'purpose'),)
-        default_permissions = ()

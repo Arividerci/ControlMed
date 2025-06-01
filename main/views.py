@@ -414,7 +414,6 @@ def delete_purpose_row(request, patient_id, purpose_id):
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid request'})
 
-
 @csrf_exempt
 @login_required
 def save_purpose_row(request, patient_id):
@@ -423,48 +422,66 @@ def save_purpose_row(request, patient_id):
             data = json.loads(request.body)
             purpose_id = data.get('id')
 
-            # Получение медперсонала и госпитализации
+            # Получаем медперсонал
             medical_staff = MedicalStaff.objects.get(user=request.user)
+
+            # Получаем активную госпитализацию
             hospitalization = Hospitalization.objects.filter(
                 patient_id=patient_id,
                 hospitalization_startdate__lte=date.today(),
                 hospitalization_enddate__gte=date.today()
             ).first()
 
-            # Авторасчет статуса
-            calculated_status = "Активный" if (
-                date.fromisoformat(data['startdate']) + timedelta(days=int(data['duration']))
-            ) >= date.today() else "Завершено"
+            if not hospitalization:
+                return JsonResponse({'success': False, 'error': 'Нет активной госпитализации'})
 
+            # Рассчитываем статус автоматически
+            start_date = date.fromisoformat(data['startdate'])
+            duration = int(data['duration'])
+            calculated_status = "Активный" if start_date + timedelta(days=duration) >= date.today() else "Завершено"
             status = data.get('status') or calculated_status
 
-            # Создание или обновление назначения
+            # Обновление или создание назначения
             if purpose_id:
                 purpose = Purpose.objects.get(pk=purpose_id)
+                purpose.purpose_startdate = start_date
+                purpose.purpose_duration = duration
+                purpose.purpose_diagnosis = data['diagnosis']
+                purpose.purpose_status = status
+                purpose.medical_staff = medical_staff
+                purpose.hospitalization = hospitalization
+                purpose.save()
+
+                # Удаляем старые связи
                 IncludesReception.objects.filter(purpose=purpose).delete()
                 IncludesConducting.objects.filter(purpose=purpose).delete()
             else:
-                purpose = Purpose()
+                purpose = Purpose.objects.create(
+                    purpose_startdate=start_date,
+                    purpose_duration=duration,
+                    purpose_diagnosis=data['diagnosis'],
+                    purpose_status=status,
+                    medical_staff=medical_staff,
+                    hospitalization=hospitalization
+                )
 
-            purpose.purpose_startdate = date.fromisoformat(data['startdate'])
-            purpose.purpose_duration = int(data['duration'])
-            purpose.purpose_diagnosis = data['diagnosis']
-            purpose.purpose_status = status
-            purpose.medical_staff = medical_staff
-            purpose.hospitalization = hospitalization
-            purpose.save()
+            # Добавляем медикаменты
+            IncludesReception.objects.bulk_create([
+                IncludesReception(medication_id=med_id, purpose=purpose)
+                for med_id in data.get('medications', [])
+            ])
 
-            # Сохраняем связи: медикаменты
-            for med_id in data.get('medications', []):
-                IncludesReception.objects.create(purpose=purpose, medication_id=med_id)
-
-            # Сохраняем связи: процедуры
-            for proc_id in data.get('procedures', []):
-                IncludesConducting.objects.create(purpose=purpose, procedures_id=proc_id)
+            # Добавляем процедуры
+            IncludesConducting.objects.bulk_create([
+                IncludesConducting(procedures_id=proc_id, purpose=purpose)
+                for proc_id in data.get('procedures', [])
+            ])
 
             return JsonResponse({"success": True, "id": purpose.purpose_id})
 
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return JsonResponse({"success": False, "error": str(e)})
 
     return JsonResponse({"success": False, "error": "Invalid request"})

@@ -196,10 +196,14 @@
                     <option>Приостановлено</option>
                 </select>
             </td>
-            <td><button class="save-button" onclick="saveRow(this)">Сохранить</button></td>
+            <td>
+                <button class="save-button" onclick="saveRow(this)">Сохранить</button>
+                <button class="save-button" style="background-color:#dc3545" onclick="deleteRow(this)">Удалить</button>
+            </td>
         `;
         tbody.appendChild(row);
     }
+
 
     function saveRow(button) {
         const row = button.closest("tr");
