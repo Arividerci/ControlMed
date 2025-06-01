@@ -1,10 +1,3 @@
-// patient_purpose.js
-
-function markChanged(el) {
-    const row = el.closest('tr');
-    const saveBtn = row.querySelector('button.save-button');
-    if (saveBtn) saveBtn.disabled = false;
-}
 
 function addMedicationSelect(button) {
     const wrapper = button.closest('.medications-wrapper');
@@ -105,7 +98,7 @@ function addRow() {
                 <option>Приостановлено</option>
             </select>
         </td>
-        <td>
+        <td class="but-sd">
             <button class="save-button" onclick="saveRow(this)">Сохранить</button>
             <button class="delete-button" onclick="deleteRow(this)">Удалить</button>
         </td>
@@ -194,4 +187,12 @@ function removeProcedureSelect(button) {
     const wrapper = button.closest('.procedure-select-wrapper');
     wrapper.remove();
     markChanged(button);
+}
+
+function markChanged(el) {
+    const row = el.closest('tr');
+    const saveBtn = row.querySelector('.save-button');
+    if (saveBtn) {
+        saveBtn.disabled = false;
+    }
 }

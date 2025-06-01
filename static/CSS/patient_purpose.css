@@ -81,3 +81,91 @@ th {
     cursor: pointer;
     font-size: 14px;
 }
+
+/* Общая таблица */
+.styled-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 20px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    background: white;
+}
+
+/* Заголовки */
+.styled-table thead {
+    background-color: #d76b49;
+    color: white;
+    font-weight: bold;
+}
+
+.styled-table th, .styled-table td {
+    padding: 10px 12px;
+    vertical-align: middle;
+    border-bottom: 1px solid #eee;
+}
+
+/* Кнопки */
+.save-button,
+.delete-button,
+.add-button {
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 8px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+}
+
+.save-button {
+    background-color: #fd7e50;
+    color: white;
+}
+.save-button:disabled {
+    background-color: #ccc;
+    color: #666;
+    cursor: default;
+}
+
+.delete-button {
+    background-color: #dc3545;
+    color: white;
+}
+
+.add-button {
+    background-color: #d76b49;
+    color: white;
+    margin-top: 10px;
+}
+
+/* Выравнивание вложенных select + ✖ */
+.medication-select-wrapper,
+.procedure-select-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.medication-select-wrapper select,
+.procedure-select-wrapper select {
+    flex: 1;
+}
+
+/* ✖ кнопка */
+.medication-select-wrapper button,
+.procedure-select-wrapper button {
+    padding: 4px 8px;
+    font-size: 14px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.but-sd{
+    display: flex; flex-direction: column; gap: 6px;
+}
