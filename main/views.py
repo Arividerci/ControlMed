@@ -718,9 +718,22 @@ def assignments_view(request):
     })
 
 
+@login_required
 def hospitalizations_view(request):
-    hospitalizations = Hospitalization.objects.all()  # или другой фильтр
-    return render(request, 'main/hospitalizations.html', {'hospitalizations': hospitalizations})
+    staff = MedicalStaff.objects.get(user=request.user)
+
+    # Если главный врач, показываем все госпитализации
+    if staff.medical_staff_post == 'Главврач':
+        hospitalizations = Hospitalization.objects.all()
+    else:
+        # Для остальных — только госпитализации этого врача
+        hospitalizations = Hospitalization.objects.filter(medical_staff=staff)
+
+    return render(request, 'main/hospitalizations.html', {
+        'hospitalizations': hospitalizations,
+        'staff': staff,
+    })
+
 
 def export_assignments(request):
     # Создание ответа с типом контента для CSV

@@ -1,0 +1,86 @@
+{% extends 'main/base.html' %}
+
+{% load static %}
+{% block title %}Госпитализации{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'CSS/patient_detail.css' %}">
+<link rel="stylesheet" href="{% static 'CSS/assignments.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="patient-layout">
+    {% include 'main/assignments_sidebar.html' %}
+
+    <div class="patient-content">
+        <h2>Госпитализации</h2>
+
+        {% if staff.medical_staff_post == 'Главврач' %}
+            <p>Вы видите все госпитализации.</p>
+        {% else %}
+            <p>Вы видите только те госпитализации, которые касаются вашего пациента.</p>
+        {% endif %}
+
+        {% if hospitalizations %}
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Пациент</th>
+                    <th>Дата начала</th>
+                    <th>Дата окончания</th>
+                    <th>Палата</th>
+                    <th>Должность и ФИО</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for hospitalization in hospitalizations %}
+                    <tr>
+                        <td>{{ hospitalization.patient.patient_name }}</td>
+                        <td>{{ hospitalization.hospitalization_startdate }}</td>
+                        <td>{{ hospitalization.hospitalization_enddate }}</td>
+                        <td>{{ hospitalization.hospitalization_room }}</td>
+                        <td>
+                            {% if hospitalization.medical_staff %}
+                                {{ hospitalization.medical_staff.medical_staff_post }} - 
+                                {{ hospitalization.medical_staff.medical_staff_name }}
+                            {% else %}
+                                Нет медсестры/медбрата
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p>Госпитализаций нет.</p>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.export-button-container {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.export-button {
+    background-color: #d76b49;
+    border: none;
+    color: white;
+    font-weight: bold;
+    padding: 10px 20px;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 200px;
+    text-align: center;
+}
+
+.export-button:hover {
+    background-color: #ffffff;
+    color: #d76b49;
+}
+</style>
+{% endblock %}
