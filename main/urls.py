@@ -21,6 +21,12 @@ urlpatterns = [
     path('patients/<int:patient_id>/', views.patient_detail, name='patient_detail'),
     path('patients/delete/<int:patient_id>/', views.delete_patient, name='delete_patient'),
     path('patients/remove-photo/<int:patient_id>/', views.remove_patient_photo, name='remove_patient_photo'),
+    path('patients/<int:patient_id>/hospitalization/', views.patient_hospitalization, name='patient_hospitalization'),
+    path('patients/<int:patient_id>/purpose/', views.patient_purpose, name='patient_purpose'),
+    path('patients/<int:patient_id>/purpose/save/', views.save_purpose_row, name='save_purpose_row'),
+    path('patients/<int:patient_id>/purpose/delete/<int:purpose_id>/', views.delete_purpose_row, name='delete_purpose_row'),
+
+
 
 
 

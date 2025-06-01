@@ -2,7 +2,8 @@ import datetime
 
 from django import forms
 from django.contrib.auth.models import User
-from .models import Patient, MedicalStaff, Hospitalization, Purpose
+from .models import Patient, MedicalStaff, Hospitalization, Purpose, Procedures, Medication
+
 
 from django.core.exceptions import ValidationError
 
@@ -86,21 +87,30 @@ class RegisterStep1Form(forms.Form):
         if User.objects.filter(username=username).exists():
             raise ValidationError("Пользователь с таким логином уже существует.")
         return username
-from django import forms
-from .models import Purpose
 
 class PurposeForm(forms.ModelForm):
+    purpose_startdate = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date'}),
+        label='Дата начала'
+    )
+
     class Meta:
         model = Purpose
         fields = [
-            'purpose_StartDate',   # строго как в модели
+            'purpose_startdate',
             'purpose_duration',
             'purpose_status',
-            'medical_staff',
-            'hospitalization',
-            'purpose_diagnosis'
+            'purpose_diagnosis',
+            # 👇 не включаем medical_staff и hospitalization
         ]
-
+        widgets = {
+            'purpose_diagnosis': forms.Textarea(attrs={'rows': 4}),
+        }
+        labels = {
+            'purpose_duration': 'Длительность (дней)',
+            'purpose_status': 'Статус',
+            'purpose_diagnosis': 'Диагноз / комментарий',
+        }
         
 class LoginForm(forms.Form):
     username = forms.CharField(label="Логин")

@@ -1,9 +1,6 @@
 {% extends 'main/base.html' %}
 {% block title %}Кабинет пациента{% endblock %}
 
-
-{% include 'main/hospitalization_form.html' %}
-{% include 'main/purpose_form.html' %}
 {% load static %}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'CSS/patient_detail.css' %}">
@@ -14,12 +11,15 @@
 <div id="section-main" class="patient-section">
   <div class="patient-layout">
      <div class="patient-sidebar">
-        <a href="#" id="btn-main" class="patient-sidebar-item" onclick="switchSection('main', event)">Главная</a>
-        <a href="#" id="btn-hospitalization" class="patient-sidebar-item" onclick="switchSection('hospitalization', event)">Госпитализация</a>
-        <a href="#" id="btn-purpose" class="patient-sidebar-item" onclick="switchSection('purpose', event)">Назначения</a>
-
+        <a href="{% url 'patient_detail' patient.patient_id %}" 
+          class="patient-sidebar-item {% if active_page == 'main' %}active{% endif %}">Главная</a>
+        <a href="{% url 'patient_hospitalization' patient.patient_id %}" 
+          class="patient-sidebar-item {% if active_page == 'hospitalization' %}active{% endif %}">Госпитализация</a>
+        <a href="{% url 'patient_purpose' patient.patient_id %}" 
+          class="patient-sidebar-item {% if active_page == 'purpose' %}active{% endif %}">Назначения</a>
         <a href="{% url 'patients' %}" class="patient-sidebar-back">Вернуться к пациентам</a>
     </div>
+
 
       <!-- Main Content -->
       <div class="patient-form">
@@ -113,37 +113,6 @@
       </div>
   </div>
 </div>
-
-<div id="section-hospitalization" class="patient-section" style="display: none;">
-  <div class="patient-layout">
-   <div class="patient-sidebar">
-        <a href="#" id="btn-main" class="patient-sidebar-item" onclick="switchSection('main', event)">Главная</a>
-        <a href="#" id="btn-hospitalization" class="patient-sidebar-item" onclick="switchSection('hospitalization', event)">Госпитализация</a>
-        <a href="#" id="btn-purpose" class="patient-sidebar-item" onclick="switchSection('purpose', event)">Назначения</a>
-
-        <a href="{% url 'patients' %}" class="patient-sidebar-back">Вернуться к пациентам</a>
-    </div>
-
-      {% include 'main/hospitalization_form.html' %}
-    </div>
-</div>
-
-<div id="section-purpose" class="patient-section" style="display: none;">
-  <div class="patient-layout">
-    <div class="patient-sidebar">
-      <a href="#" id="btn-main" class="patient-sidebar-item" onclick="switchSection('main', event)">Главная</a>
-        <a href="#" id="btn-hospitalization" class="patient-sidebar-item" onclick="switchSection('hospitalization', event)">Госпитализация</a>
-        <a href="#" id="btn-purpose" class="patient-sidebar-item" onclick="switchSection('purpose', event)">Назначения</a>
-
-        <a href="{% url 'patients' %}" class="patient-sidebar-back">Вернуться к пациентам</a>
-    </div>
-    {% include 'main/purpose_form.html' %}
-  </div>
-</div>
-<script>
-    const PATIENT_ID = {{ patient.patient_id }};
-</script>
-
 {% block scripts %}
 
 

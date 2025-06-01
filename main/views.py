@@ -1,5 +1,6 @@
-from .models import Patient, MedicalStaff, MedicalBook, Hospitalization, Purpose
+from .models import Patient, MedicalStaff, MedicalBook, Hospitalization, Purpose, Medication, Procedures, IncludesReception, IncludesConducting
 from .forms import RegisterStep1Form, RegisterStep2Form, LoginForm, AddPatientForm,  HospitalizationForm, PurposeForm
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -12,7 +13,8 @@ from django.http import HttpResponseForbidden
 import os
 import json
 import traceback
-import datetime
+from datetime import date, timedelta
+
 
 from django.http import JsonResponse
 
@@ -310,4 +312,159 @@ def patient_detail(request, patient_id):
     'hospitalizations': Hospitalization.objects.filter(patient=patient),
     'medical_staff': MedicalStaff.objects.all()
 })
+@login_required
+def patient_hospitalization(request, patient_id):
+    patient = get_object_or_404(Patient, pk=patient_id)
+    hospitalization = Hospitalization.objects.filter(
+        patient=patient,
+        hospitalization_startdate__lte=datetime.date.today(),
+        hospitalization_enddate__gte=datetime.date.today()
+    ).first()
 
+    if request.method == 'POST':
+        form = HospitalizationForm(request.POST, instance=hospitalization)
+        if form.is_valid():
+            hosp = form.save(commit=False)
+            hosp.patient = patient
+            hosp.medical_staff = MedicalStaff.objects.get(user=request.user)
+            hosp.save()
+            return redirect('patient_hospitalization', patient_id=patient_id)
+    else:
+        form = HospitalizationForm(instance=hospitalization)
+
+    return render(request, 'main/patient_hospitalization.html', {
+        'patient': patient,
+        'form': form,
+        'hospitalization': hospitalization,
+        'active_page': 'hospitalization'
+    })
+
+@login_required
+def patient_purpose(request, patient_id):
+    patient = get_object_or_404(Patient, pk=patient_id)
+    purposes = Purpose.objects.filter(hospitalization__patient=patient)
+    medications = Medication.objects.all()
+    procedures = Procedures.objects.all()
+
+    # Найдём активную госпитализацию
+    hospitalization = Hospitalization.objects.filter(
+        patient=patient,
+        hospitalization_startdate__lte=date.today(),
+        hospitalization_enddate__gte=date.today()
+    ).first()
+
+    # Медперсонал
+    try:
+        medical_staff = MedicalStaff.objects.get(user=request.user)
+    except MedicalStaff.DoesNotExist:
+        medical_staff = None
+
+    # Обработка POST (если создаётся новое назначение)
+    if request.method == 'POST':
+        form = PurposeForm(request.POST)
+        if form.is_valid():
+            purpose = form.save(commit=False)
+            purpose.medical_staff = medical_staff
+            purpose.hospitalization = hospitalization
+            purpose.purpose_status = (
+                "Активный" if purpose.purpose_startdate + timedelta(days=purpose.purpose_duration) >= date.today()
+                else "Завершено"
+            )
+            purpose.save()
+            return redirect('patient_purpose', patient_id=patient_id)
+    else:
+        form = PurposeForm(initial={'purpose_startdate': date.today()})
+
+    # --- Словари выбора медикаментов/процедур для каждого назначения ---
+    medications_selected = {
+        p.purpose_id: list(
+            IncludesReception.objects.filter(purpose=p).values_list("medication_id", flat=True)
+        )
+        for p in purposes
+    }
+    procedures_selected = {
+        p.purpose_id: list(
+            IncludesConducting.objects.filter(purpose=p).values_list("procedures_id", flat=True)
+        )
+        for p in purposes
+    }
+
+    return render(request, 'main/patient_purpose.html', {
+        'patient': patient,
+        'form': form,
+        'purposes': purposes,
+        'medications': medications,
+        'procedures': procedures,
+        'medications_selected': medications_selected,
+        'procedures_selected': procedures_selected,
+        'active_page': 'purpose',
+    })
+
+@csrf_exempt
+@login_required
+def delete_purpose_row(request, patient_id, purpose_id):
+    if request.method == 'POST':
+        try:
+            purpose = get_object_or_404(Purpose, pk=purpose_id)
+            IncludesReception.objects.filter(purpose=purpose).delete()
+            IncludesConducting.objects.filter(purpose=purpose).delete()
+            purpose.delete()
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    return JsonResponse({'success': False, 'error': 'Invalid request'})
+
+
+@csrf_exempt
+@login_required
+def save_purpose_row(request, patient_id):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            purpose_id = data.get('id')
+
+            # Получение медперсонала и госпитализации
+            medical_staff = MedicalStaff.objects.get(user=request.user)
+            hospitalization = Hospitalization.objects.filter(
+                patient_id=patient_id,
+                hospitalization_startdate__lte=date.today(),
+                hospitalization_enddate__gte=date.today()
+            ).first()
+
+            # Авторасчет статуса
+            calculated_status = "Активный" if (
+                date.fromisoformat(data['startdate']) + timedelta(days=int(data['duration']))
+            ) >= date.today() else "Завершено"
+
+            status = data.get('status') or calculated_status
+
+            # Создание или обновление назначения
+            if purpose_id:
+                purpose = Purpose.objects.get(pk=purpose_id)
+                IncludesReception.objects.filter(purpose=purpose).delete()
+                IncludesConducting.objects.filter(purpose=purpose).delete()
+            else:
+                purpose = Purpose()
+
+            purpose.purpose_startdate = date.fromisoformat(data['startdate'])
+            purpose.purpose_duration = int(data['duration'])
+            purpose.purpose_diagnosis = data['diagnosis']
+            purpose.purpose_status = status
+            purpose.medical_staff = medical_staff
+            purpose.hospitalization = hospitalization
+            purpose.save()
+
+            # Сохраняем связи: медикаменты
+            for med_id in data.get('medications', []):
+                IncludesReception.objects.create(purpose=purpose, medication_id=med_id)
+
+            # Сохраняем связи: процедуры
+            for proc_id in data.get('procedures', []):
+                IncludesConducting.objects.create(purpose=purpose, procedures_id=proc_id)
+
+            return JsonResponse({"success": True, "id": purpose.purpose_id})
+
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)})
+
+    return JsonResponse({"success": False, "error": "Invalid request"})
