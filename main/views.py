@@ -15,9 +15,12 @@ import os
 import json
 import traceback
 
-def home(request):
-    return render(request, 'main/home.html')
-
+def root_redirect(request):
+    if request.user.is_authenticated:
+        return redirect('cabinet') 
+    else:
+        return redirect('login')
+    
 @login_required
 def cabinet(request):
     return render(request, 'main/cabinet.html')

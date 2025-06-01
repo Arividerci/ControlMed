@@ -8,12 +8,11 @@ from .views import delete_selected_patients
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
-    path('', views.home, name='home'),  
-    path('home/', views.home, name='home'),
+    path('', views.root_redirect, name='root_redirect'),
     path('cabinet/', views.cabinet, name='cabinet'),
     path('appointments/', views.appointments, name='appointments'),
     path('patients/', views.patients, name='patients'),
-    path('login/', auth_views.LoginView.as_view(template_name='main/login.html'), name='login'),
+    path('login/', views.login_view, name='login'),
     path('register/', views.register_step1, name='register_step1'),
     path('register/step2/', views.register_step2, name='register_step2'), 
     path('add-patient/', add_patient, name='add_patient'),
