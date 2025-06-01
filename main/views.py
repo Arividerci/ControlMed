@@ -9,6 +9,7 @@ from django.shortcuts import render, redirect,  get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseForbidden, JsonResponse
 from datetime import date, timedelta
+from django.views.decorators.http import require_POST
 
 import os
 import json
@@ -499,14 +500,55 @@ def save_purpose_row(request, patient_id):
 
     return JsonResponse({"success": False, "error": "Invalid request"})
 
-@login_required
 def patient_medbook(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)
     medicalbook = MedicalBook.objects.get(patient=patient)
-    contents = MedicalBookContent.objects.filter(medicalbook_id=medicalbook.medicalbook_id)
+
+    # Получаем записи MedicalBookContent с необходимыми связями
+    contents_qs = MedicalBookContent.objects.filter(medicalbook_id=medicalbook.medicalbook_id).select_related('purpose')
+
+    medbook_content = []
+    for entry in contents_qs:
+        # Получаем препараты для назначения
+        medications_qs = IncludesReception.objects.filter(purpose=entry.purpose).select_related('medication')
+        medications = [med.medication.medication_name for med in medications_qs]
+
+        # Получаем процедуры для назначения
+        procedures_qs = IncludesConducting.objects.filter(purpose=entry.purpose).select_related('procedures')
+        procedures = [proc.procedures.procedures_name for proc in procedures_qs]
+
+        medbook_content.append({
+            'medical_book_content_id': entry.medical_book_content_id,
+            'medical_book_content_notes': entry.medical_book_content_notes,
+            'purpose': entry.purpose,
+            'medications': medications,
+            'procedures': procedures,
+            'doctor': entry.purpose.medical_staff.medical_staff_name if entry.purpose.medical_staff else "Неизвестен",
+        })
 
     return render(request, 'main/patient_medbook.html', {
         'patient': patient,
         'medicalbook': medicalbook,
-        'contents': contents
+        'medbook_content': medbook_content,
     })
+
+@require_POST
+def update_medical_book_comment(request, patient_id, content_id):
+    comment = request.POST.get('comment', '').strip()
+    content = get_object_or_404(MedicalBookContent, pk=content_id)
+
+    content.medical_book_content_notes = comment
+    content.save()
+
+    return redirect('patient_medbook', patient_id=patient_id)
+
+
+@login_required
+def procedures_view(request):
+    # Логика для страницы процедур
+    return render(request, 'main/procedures.html')
+
+@login_required
+def medications_view(request):
+    # Пока можно просто вернуть пустой шаблон или добавить свою логику
+    return render(request, 'main/medications.html')

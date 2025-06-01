@@ -1,0 +1,72 @@
+.patient-layout {
+    display: flex;
+    gap: 30px;
+    padding: 30px;
+}
+
+.patient-form {
+    flex-grow: 1;
+    background: #fff;
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgb(0 0 0 / 0.1);
+    max-width: 900px;
+}
+
+.medbook-entry {
+    background-color: #f9faff;
+    padding: 20px 25px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    border-left: 6px solid #fd7e50;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.05);
+}
+
+.medbook-entry h3 {
+    font-size: 1.8rem;
+    color: #00626f;
+    margin-bottom: 12px;
+}
+
+.medbook-entry p {
+    font-size: 1.1rem;
+    margin: 6px 0;
+    color: #333;
+}
+
+.medbook-entry ul {
+    list-style-type: disc;
+    padding-left: 20px;
+    margin: 6px 0 15px;
+}
+
+.medbook-entry ul li {
+    font-size: 1.1rem;
+    color: #555;
+}
+
+.comment-button {
+    margin-top: 10px;
+    padding: 10px 24px;
+    background-color: #fd7e50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: background-color 0.3s;
+}
+
+.comment-button:hover {
+    background-color: #e7622d;
+}
+
+textarea {
+    width: 100%;
+    font-size: 1rem;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    resize: vertical;
+    margin-top: 6px;
+}

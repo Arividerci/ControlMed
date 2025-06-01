@@ -1,36 +1,64 @@
 {% extends 'main/base.html' %}
-{% load static custom_filters %}
-{% block title %}Медицинская карта пациента{% endblock %}
+{% load static %}
 
+{% block title %}Медицинская карта пациента{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'CSS/patient_detail.css' %}">
+<link rel="stylesheet" href="{% static 'CSS/patient_medbook.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="patient-form">
-    <h2>Медицинская карта пациента: {{ patient.patient_name }}</h2>
+<div class="patient-layout">
     {% include 'main/patient_sidebar.html' %}
+
     <div class="patient-form">
+        <h2>Медицинская карта пациента: {{ patient.patient_name }}</h2>
+
         {% if medbook_content %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID назначения</th>
-                        <th>Диагноз</th>
-                        <th>Заметки</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for entry in medbook_content %}
-                        <tr>
-                            <td>{{ entry.purpose.purpose_id }}</td>
-                            <td>{{ entry.purpose.purpose_diagnosis }}</td>
-                            <td>{{ entry.medical_book_content_notes|default:"—" }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="medbook-content">
+                {% for entry in medbook_content %}
+                    <div class="medbook-entry">
+                        <h3>Назначение: {{ entry.purpose.purpose_id }}</h3>
+                        <p><strong>Лечащий врач:</strong> {{ entry.doctor }}</p>
+                        <p><strong>Дата начала:</strong> {{ entry.purpose.purpose_startdate }}</p>
+                        <p><strong>Длительность:</strong> {{ entry.purpose.purpose_duration }} дней</p>
+                        <p><strong>Статус:</strong> {{ entry.purpose.purpose_status }}</p>
+                        <p><strong>Диагноз:</strong> {{ entry.purpose.purpose_diagnosis }}</p>
+
+                        <p><strong>Препараты:</strong></p>
+                        <ul>
+                            {% for medication in entry.medications %}
+                                <li>{{ medication }}</li>
+                            {% empty %}
+                                <li>Нет назначенных препаратов</li>
+                            {% endfor %}
+                        </ul>
+
+                        <p><strong>Процедуры:</strong></p>
+                        <ul>
+                            {% for procedure in entry.procedures %}
+                                <li>{{ procedure }}</li>
+                            {% empty %}
+                                <li>Нет назначенных процедур</li>
+                            {% endfor %}
+                        </ul>
+
+                        {% if entry.medical_book_content_id %}
+                            <form method="post" action="{% url 'update_medical_book_comment' patient_id=patient.patient_id content_id=entry.medical_book_content_id %}">
+                                {% csrf_token %}
+                                <label for="comment-{{ entry.medical_book_content_id }}"><strong>Комментарий к диагнозу:</strong></label><br>
+                                <textarea id="comment-{{ entry.medical_book_content_id }}" name="comment" rows="4" cols="50">{{ entry.medical_book_content_notes|default_if_none:"" }}</textarea><br>
+                                <button type="submit" class="comment-button">Обновить комментарий</button>
+                            </form>
+                        {% else %}
+                            <p>Ошибка: отсутствует ID комментария для обновления.</p>
+                        {% endif %}
+
+                    </div>
+                    <hr class="entry-divider">
+                {% endfor %}
+            </div>
         {% else %}
             <p>Нет записей в медицинской карте.</p>
         {% endif %}

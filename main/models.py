@@ -40,7 +40,6 @@ class Patient(models.Model):
     class Meta:
         db_table = 'patient'
 
-
 class Purpose(models.Model):
     purpose_id = models.AutoField(primary_key=True)
     purpose_startdate = models.DateField()
@@ -59,29 +58,40 @@ class Purpose(models.Model):
         self.purpose_status = self.get_status()
         super().save(*args, **kwargs)
 
+        medical_book, created = MedicalBook.objects.get_or_create(patient=self.hospitalization.patient)
+
+        new_note = f"Назначение: {self.purpose_diagnosis}; Начало: {self.purpose_startdate}; Длительность: {self.purpose_duration} дней; Статус: {self.purpose_status}"
+
+        MedicalBookContent.objects.create(
+            medicalbook_id=medical_book.medicalbook_id,
+            purpose=self,
+            medical_book_content_notes=new_note,
+    )
+
     class Meta:
         db_table = 'purpose'
         managed = False
 
 
-
-class MedicalBook(models.Model):
-    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='patient_id')
-    medicalbook_id = models.AutoField(primary_key=True)
-
-    class Meta:
-        db_table = 'medicalbook'
-        managed = False
-
 class MedicalBookContent(models.Model):
-    medical_book_content_id = models.AutoField(primary_key=True)  # имя как в БД
-    medicalbook_id = models.IntegerField()  # или ForeignKey, если хочешь
+    medical_book_content_id = models.AutoField(primary_key=True)
+    medicalbook_id = models.IntegerField()  
     purpose = models.ForeignKey(Purpose, on_delete=models.RESTRICT, db_column='purpose_id')
     medical_book_content_notes = models.TextField(max_length=1500, null=True, blank=True)
 
     class Meta:
         db_table = 'medical_book_content'
         managed = False
+
+class MedicalBook(models.Model):
+    medicalbook_id = models.AutoField(primary_key=True)  # Исправлено на правильное имя
+    patient = models.OneToOneField('Patient', on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'medicalbook'
+        managed = False
+
+
 
 class Medication(models.Model):
     medication_id = models.AutoField(primary_key=True)

@@ -23,55 +23,42 @@
                         <ul class="top-menu">
                             {% if user.is_authenticated %}
                                 <li><a href="{% url 'cabinet' %}">Профиль</a></li>
-                            {% endif %}
-                            <li><a href="{% url 'patients' %}">Пациенты</a></li>
-                            {% if user.is_authenticated %}
+                                <li><a href="{% url 'patients' %}">Пациенты</a></li>
+
                                 {% with user.medicalstaff as staff %}
                                     {% if staff.medical_staff_post == 'Главврач' %}
                                         <li><a href="{% url 'appointments' %}">Все назначения</a></li>
-                                    {% else %}
-                                        <li><a href="{% url 'appointments' %}">Мои назначения</a></li>
-                                    {% endif %}
-                                {% endwith %}
-                            {% endif %}
-                            {% if user.is_authenticated %}
-                                {% with user.medicalstaff as staff %}
-                                    {% if staff.medical_staff_post == 'Главврач' %}
-                                        <li><a href="{% url 'appointments' %}">Все Процедуры</a></li>
-                                    {% else %}
-                                        <li><a href="{% url 'appointments' %}">Мои процедуры</a></li>
-                                    {% endif %}
-                                {% endwith %}
-                            {% endif %}
-                            
-
-                            {% if user.is_authenticated %}
-                                {% with user.medicalstaff as staff %}
-                                    {% if staff.medical_staff_post == 'Главврач' %}
+                                        <li><a href="{% url 'procedures' %}">Все процедуры</a></li>
+                                        <li><a href="{% url 'medications' %}">Все медикаменты</a></li>
                                         <li><a href="{% url 'register_step1' %}">Зарегистрировать</a></li>
+                                    {% elif staff.medical_staff_post == 'Врач' %}
+                                        <li><a href="{% url 'appointments' %}">Мои назначения</a></li>
+                                        <li><a href="{% url 'procedures' %}">Мои процедуры</a></li>
+                                    {% elif staff.medical_staff_post == 'Медсестра' or staff.medical_staff_post == 'Медбрат' %}
+                                        <li><a href="{% url 'appointments' %}">Мои назначения</a></li>
+                                        <li><a href="{% url 'procedures' %}">Мои процедуры</a></li>
+                                        <li><a href="{% url 'medications' %}">Мои медикаменты</a></li>
                                     {% endif %}
                                 {% endwith %}
                             {% endif %}
+                
+                            {% if user.is_authenticated %}
+                                <div class="bottom-menu">
+                                    <form method="post" action="{% url 'logout' %}">
+                                    {% csrf_token %}
+                                    <button type="submit">Выйти</button>
+                                    </form>
+                                </div>
+                            {% else %}
+                                <div class="bottom-menu">
+                                    <form method="post" action="{% url 'login' %}">
+                                    {% csrf_token %}
+                                    <button type="submit">Войти</button>
+                                    </form>
+                                </div>
+                            {% endif %}
+
                         </ul>
-
-
-                        {% if user.is_authenticated %}
-                        <div class="bottom-menu">
-                            <form method="post" action="{% url 'logout' %}">
-                            {% csrf_token %}
-                            <button type="submit">Выйти</button>
-                            </form>
-                        </div>
-
-                        {% else %}
-                        <div class="bottom-menu">
-                            <form method="post" action="{% url 'login' %}">
-                            {% csrf_token %}
-                            <button type="submit">Войти</button>
-                            </form>
-                        </div>
-                        {% endif %}
-
                     </div>
                 </div>
             </nav>
@@ -79,9 +66,11 @@
     </header>
 
     <main>
-        {% block content %}
-        
-        {% endblock %}
+        <div class="site-content">
+            {% block content %}
+            
+            {% endblock %}
+        </div>
     </main>
 
     <footer>

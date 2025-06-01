@@ -25,6 +25,7 @@
     <div class="patient-form">
         <h3>Назначения: {{ patient.patient_name }}</h3>
 
+        <div style="overflow-x: auto;">
         <table id="purposesTable" class="styled-table">
             <thead>
                 <tr>
@@ -94,7 +95,7 @@
                 {% endfor %}
             </tbody>
         </table>
-
+        </div>
         <div style="margin-top: 20px;">
             <button class="add-button" onclick="addRow()">+ Добавить назначение</button>
         </div>

@@ -1,51 +1,55 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --------- patient form (основные данные) ---------
-    const form = document.getElementById('patientForm');
-    const saveButton = document.getElementById('saveButton');
-
-    if (form && saveButton) {
-        const originalValues = Array.from(form.elements).map(e => e.value);
-
-        form.addEventListener('input', () => {
-            const changed = Array.from(form.elements).some((e, i) => e.value !== originalValues[i]);
-            saveButton.disabled = !changed;
-        });
-
-        const photoInput = document.getElementById('photoInput');
-        if (photoInput) {
-            photoInput.addEventListener('change', () => {
-                saveButton.disabled = false;
-            });
-        }
+  // Функция получения текущего значения элемента с учётом типа
+  function getFieldValue(el) {
+    if (el.type === 'checkbox' || el.type === 'radio') {
+      return el.checked;
     }
+    return el.value.trim();
+  }
 
-    // --------- hospitalization form (госпитализация) ---------
-const hospForm = document.getElementById('hospitalizationForm');
-const hospSaveBtn = document.getElementById('hospitalizationSaveBtn');
+  // --- Пациент ---
+  const patientForm = document.getElementById('patientForm');
+  const patientSaveBtn = document.getElementById('saveButton');
 
-if (hospForm && hospSaveBtn) {
-    const fields = Array.from(hospForm.elements).filter(el => el.name && el.type !== 'hidden');
-    const initialValues = fields.map(el => el.dataset.original ?? el.value ?? '');
+  if (patientForm && patientSaveBtn) {
+    const elements = Array.from(patientForm.elements).filter(el => el.name && !el.disabled);
+    const originalValues = elements.map(getFieldValue);
 
-    const isFormEmpty = initialValues.every(val => val === '');
-
-    const updateSaveButton = () => {
-        const changed = fields.some((el, i) => {
-        const current = el.value?.trim();
-        const original = initialValues[i]?.trim();
-        return current !== original;
+    patientForm.addEventListener('input', () => {
+      const changed = elements.some((el, i) => getFieldValue(el) !== originalValues[i]);
+      patientSaveBtn.disabled = !changed;
     });
 
-        hospSaveBtn.disabled = !changed;
-    };
+    // Для фото отдельное событие
+    const photoInput = document.getElementById('photoInput');
+    if (photoInput) {
+      photoInput.addEventListener('change', () => {
+        patientSaveBtn.disabled = false;
+      });
+    }
+  }
+
+  // --- Госпитализация ---
+  const hospForm = document.getElementById('hospitalizationForm');
+  const hospSaveBtn = document.getElementById('hospitalizationSaveBtn');
+
+  if (hospForm && hospSaveBtn) {
+    const fields = Array.from(hospForm.elements).filter(el => el.name && !el.disabled);
+    const initialValues = fields.map(getFieldValue);
+
+    const isFormEmpty = initialValues.every(val => val === '' || val === false);
 
     if (isFormEmpty) {
-        hospSaveBtn.disabled = false;
+      hospSaveBtn.disabled = false;
     } else {
-        hospSaveBtn.disabled = true;
-        hospForm.addEventListener('input', updateSaveButton);
+      hospSaveBtn.disabled = true;
+      hospForm.addEventListener('input', () => {
+        const changed = fields.some((el, i) => getFieldValue(el) !== initialValues[i]);
+        hospSaveBtn.disabled = !changed;
+      });
     }
-}
+  }
+});
 
 
 

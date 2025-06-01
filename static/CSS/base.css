@@ -18,6 +18,15 @@ main {
   flex: 1;
 }
 
+.site-content {
+     max-width: 1400px;
+    margin: 0 auto;
+    padding: 30px;
+    box-sizing: border-box;
+}
+
+
+
 footer {
   background-color: #00626f; 
   color: white;
