@@ -80,7 +80,7 @@ function addRow() {
                 <div class="medication-select-wrapper">
                     <select class="form-select medication-select" onchange="markChanged(this)">${medOptions}</select>
                 </div>
-                <button type="button" class="add-button" onclick="addMedicationSelect(this)">+</button>
+                <button type="button" class="small-button" onclick="addMedicationSelect(this)">+</button>
             </div>
         </td>
         <td>
@@ -88,7 +88,7 @@ function addRow() {
                 <div class="procedure-select-wrapper">
                     <select class="form-select procedure-select" onchange="markChanged(this)">${procOptions}</select>
                 </div>
-                <button type="button" class="add-button" onclick="addProcedureSelect(this)">+</button>
+                <button type="button" class="small-button" onclick="addProcedureSelect(this)">+</button>
             </div>
         </td>
         <td>

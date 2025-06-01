@@ -229,6 +229,27 @@
     
 }
 
+.small-button {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    font-size: 18px;
+    font-weight: bold;
+    background-color: #d76b49; 
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+    line-height: 32px;
+    user-select: none;
+    transition: background-color 0.3s ease;
+}
+
+.small-button:hover {
+    background-color: #ec7653; 
+}
+
 .patient-section.hidden {
     opacity: 0;
     visibility: hidden;
