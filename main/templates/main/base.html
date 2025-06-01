@@ -22,11 +22,38 @@
                     <div class="sidebar-content">
                         <ul class="top-menu">
                             {% if user.is_authenticated %}
-                            <li><a href="{% url 'cabinet' %}">Личный кабинет</a></li>
+                                <li><a href="{% url 'cabinet' %}">Профиль</a></li>
                             {% endif %}
-                            <li><h2></h1><a href="{% url 'appointments' %}">Назначения</a></li>
                             <li><a href="{% url 'patients' %}">Пациенты</a></li>
+                            {% if user.is_authenticated %}
+                                {% with user.medicalstaff as staff %}
+                                    {% if staff.medical_staff_post == 'Главврач' %}
+                                        <li><a href="{% url 'appointments' %}">Все назначения</a></li>
+                                    {% else %}
+                                        <li><a href="{% url 'appointments' %}">Мои назначения</a></li>
+                                    {% endif %}
+                                {% endwith %}
+                            {% endif %}
+                            {% if user.is_authenticated %}
+                                {% with user.medicalstaff as staff %}
+                                    {% if staff.medical_staff_post == 'Главврач' %}
+                                        <li><a href="{% url 'appointments' %}">Все Процедуры</a></li>
+                                    {% else %}
+                                        <li><a href="{% url 'appointments' %}">Мои процедуры</a></li>
+                                    {% endif %}
+                                {% endwith %}
+                            {% endif %}
+                            
+
+                            {% if user.is_authenticated %}
+                                {% with user.medicalstaff as staff %}
+                                    {% if staff.medical_staff_post == 'Главврач' %}
+                                        <li><a href="{% url 'register_step1' %}">Зарегистрировать</a></li>
+                                    {% endif %}
+                                {% endwith %}
+                            {% endif %}
                         </ul>
+
 
                         {% if user.is_authenticated %}
                         <div class="bottom-menu">

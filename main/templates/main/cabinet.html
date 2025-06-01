@@ -1,18 +1,26 @@
 {% extends "main/base.html" %}
 
-{% block title %}Главная{% endblock %}
+{% block title %}Личный кабинет{% endblock %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'CSS/cabinet.css' %}">
+{% endblock %}
 
 {% block content %}
-<h2>Личный кабинет</h2>
-{% if staff %}
-    <p><strong>ФИО:</strong> {{ staff.medical_staff_name }}</p>
-    <p><strong>Дата рождения:</strong> {{ staff.medical_staff_birthday }}</p>
-    <p><strong>Пол:</strong> {{ staff.medical_staff_gender }}</p>
-    <p><strong>Должность:</strong> {{ staff.medical_staff_post }}</p>
-    <p><strong>Специализация:</strong> {{ staff.medical_staff_specialisation }}</p>
-    <p><strong>Отделение:</strong> {{ staff.medical_staff_department }}</p>
-{% else %}
-    <p>Информация не найдена.</p>
-{% endif %}
+<div class="cabinet-container">
+    <h2 class="cabinet-title">Личный кабинет</h2>
 
+    {% if staff %}
+        <div class="cabinet-info">
+            <div class="cabinet-row"><span class="label">ФИО:</span><span>{{ staff.medical_staff_name }}</span></div>
+            <div class="cabinet-row"><span class="label">Дата рождения:</span><span>{{ staff.medical_staff_birthday }}</span></div>
+            <div class="cabinet-row"><span class="label">Пол:</span><span>{{ staff.medical_staff_gender }}</span></div>
+            <div class="cabinet-row"><span class="label">Должность:</span><span>{{ staff.medical_staff_post }}</span></div>
+            <div class="cabinet-row"><span class="label">Специализация:</span><span>{{ staff.medical_staff_specialisation }}</span></div>
+        </div>
+    {% else %}
+        <p class="empty-message">Информация о сотруднике не найдена.</p>
+    {% endif %}
+</div>
 {% endblock %}

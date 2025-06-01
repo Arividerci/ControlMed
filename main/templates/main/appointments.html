@@ -1,7 +1,44 @@
 {% extends "main/base.html" %}
+{% block title %}Назначения для выполнения{% endblock %}
+{% load static %}
 
-{% block title %}Главная{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'CSS/patient.css' %}">
+{% endblock %}
 
 {% block content %}
-<p>Это Назначения.</p>
+<div class="page-container-patient">
+    <div class="header-patient">
+        <h2>Назначения для выполнения</h2>
+    </div>
+
+    {% if appointments %}
+    <table>
+        <thead>
+            <tr>
+                <th>Пациент</th>
+                <th>Дата начала</th>
+                <th>Продолжительность (дн.)</th>
+                <th>Диагноз</th>
+                <th>Палата</th>
+                <th>Статус</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for purpose in appointments %}
+            <tr>
+                <td>{{ purpose.hospitalization.patient.patient_name }}</td>
+                <td>{{ purpose.purpose_start_date }}</td>
+                <td>{{ purpose.purpose_duration }}</td>
+                <td>{{ purpose.purpose_diagnosis }}</td>
+                <td>{{ purpose.hospitalization.hospitalization_room }}</td>
+                <td>{{ purpose.purpose_status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>Нет назначений, требующих выполнения.</p>
+    {% endif %}
+</div>
 {% endblock %}

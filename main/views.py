@@ -1,6 +1,5 @@
-from .models import Patient, MedicalStaff, MedicalBook, Hospitalization, Purpose, Medication, Procedures, IncludesReception, IncludesConducting
+from .models import Patient, MedicalStaff, MedicalBook, Hospitalization, Purpose, Medication, Procedures, IncludesReception, IncludesConducting, MedicalBookContent
 from .forms import RegisterStep1Form, RegisterStep2Form, LoginForm, AddPatientForm,  HospitalizationForm, PurposeForm
-
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -8,15 +7,12 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect,  get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
+from datetime import date, timedelta
 
 import os
 import json
 import traceback
-from datetime import date, timedelta
-
-
-from django.http import JsonResponse
 
 def home(request):
     return render(request, 'main/home.html')
@@ -33,6 +29,20 @@ def appointments(request):
 def patients(request):
     all_patients = Patient.objects.all()
     return render(request, 'main/patients.html', {'patients': all_patients})
+
+
+@login_required
+def appointments_view(request):
+    staff = MedicalStaff.objects.get(user=request.user)
+
+    appointments = Purpose.objects.filter(
+        hospitalization__medical_staff=staff,
+        purpose_status__in=['Активный', 'Приостановлен']
+    ).select_related('hospitalization', 'hospitalization__patient')
+
+    return render(request, 'main/appointments_list.html', {
+        'appointments': appointments
+    })
 
 @login_required
 def add_patient(request):
@@ -217,6 +227,7 @@ def patient_detail(request, patient_id):
     today = datetime.date.today()
     patient = get_object_or_404(Patient, pk=patient_id)
     active_tab = request.GET.get('tab', 'main')
+    medical_book = MedicalBook.objects.filter(patient=patient).first()
 
     if request.method == 'POST':
         form_type = request.POST.get('form_type')
@@ -306,11 +317,13 @@ def patient_detail(request, patient_id):
     return render(request, 'main/patient_detail.html', {
     'patient': patient,
     'hospitalization': hospitalization,
+    'medical_book': medical_book,
     'form': HospitalizationForm(),
     'purpose_form': PurposeForm(),
     'active_tab': active_tab,
     'hospitalizations': Hospitalization.objects.filter(patient=patient),
-    'medical_staff': MedicalStaff.objects.all()
+    'medical_staff': MedicalStaff.objects.all(),
+    
 })
 @login_required
 def patient_hospitalization(request, patient_id):
@@ -485,3 +498,15 @@ def save_purpose_row(request, patient_id):
             return JsonResponse({"success": False, "error": str(e)})
 
     return JsonResponse({"success": False, "error": "Invalid request"})
+
+@login_required
+def patient_medbook(request, patient_id):
+    patient = get_object_or_404(Patient, pk=patient_id)
+    medicalbook = MedicalBook.objects.get(patient=patient)
+    contents = MedicalBookContent.objects.filter(medicalbook_id=medicalbook.medicalbook_id)
+
+    return render(request, 'main/patient_medbook.html', {
+        'patient': patient,
+        'medicalbook': medicalbook,
+        'contents': contents
+    })

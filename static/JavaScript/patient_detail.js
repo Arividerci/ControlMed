@@ -20,28 +20,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --------- hospitalization form (госпитализация) ---------
-    const hospForm = document.getElementById('hospitalizationForm');
-    const hospSaveBtn = document.getElementById('hospitalizationSaveBtn');
+const hospForm = document.getElementById('hospitalizationForm');
+const hospSaveBtn = document.getElementById('hospitalizationSaveBtn');
 
-    if (hospForm && hospSaveBtn) {
-        const fields = Array.from(hospForm.elements).filter(el => el.name && el.type !== 'hidden');
-        const initialValues = fields.map(el => el.dataset.original ?? '');
+if (hospForm && hospSaveBtn) {
+    const fields = Array.from(hospForm.elements).filter(el => el.name && el.type !== 'hidden');
+    const initialValues = fields.map(el => el.dataset.original ?? el.value ?? '');
 
-        const isFormEmpty = initialValues.every(val => val === '');
+    const isFormEmpty = initialValues.every(val => val === '');
 
-        const updateSaveButton = () => {
-            const changed = fields.some((el, i) => el.value !== initialValues[i]);
-            hospSaveBtn.disabled = !changed;
-        };
+    const updateSaveButton = () => {
+        const changed = fields.some((el, i) => {
+        const current = el.value?.trim();
+        const original = initialValues[i]?.trim();
+        return current !== original;
+    });
 
-        if (isFormEmpty) {
-            hospSaveBtn.disabled = false; // можно сразу вводить и сохранять
-        } else {
-            hospSaveBtn.disabled = true;
-            hospForm.addEventListener('input', updateSaveButton);
-        }
+        hospSaveBtn.disabled = !changed;
+    };
+
+    if (isFormEmpty) {
+        hospSaveBtn.disabled = false;
+    } else {
+        hospSaveBtn.disabled = true;
+        hospForm.addEventListener('input', updateSaveButton);
     }
-});
+}
+
 
 
 

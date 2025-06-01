@@ -103,6 +103,16 @@
         background-color: #d76b49;
     }
 
+     thead tr:hover {
+        background-color: #d76b49 !important;
+        color: white !important;
+    }
+
+    thead th:hover {
+        background-color: #e26e4b !important;
+        color: white !important;
+    }
+
     th, td {
         padding: 10px 14px;
         text-align: left;

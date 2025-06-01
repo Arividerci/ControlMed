@@ -1,0 +1,39 @@
+{% extends 'main/base.html' %}
+{% load static custom_filters %}
+{% block title %}Медицинская карта пациента{% endblock %}
+
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'CSS/patient_detail.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="patient-form">
+    <h2>Медицинская карта пациента: {{ patient.patient_name }}</h2>
+    {% include 'main/patient_sidebar.html' %}
+    <div class="patient-form">
+        {% if medbook_content %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID назначения</th>
+                        <th>Диагноз</th>
+                        <th>Заметки</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in medbook_content %}
+                        <tr>
+                            <td>{{ entry.purpose.purpose_id }}</td>
+                            <td>{{ entry.purpose.purpose_diagnosis }}</td>
+                            <td>{{ entry.medical_book_content_notes|default:"—" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Нет записей в медицинской карте.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

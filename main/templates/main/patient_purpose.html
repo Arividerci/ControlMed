@@ -1,9 +1,9 @@
+<!-- patient_purpose.html -->
 {% extends 'main/base.html' %}
 {% load static custom_filters %}
 {% block title %}Назначения пациента{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'CSS/patient.css' %}">
 <link rel="stylesheet" href="{% static 'CSS/patient_detail.css' %}">
 <link rel="stylesheet" href="{% static 'CSS/patient_purpose.css' %}">
 {% endblock %}
@@ -24,7 +24,7 @@
     {% include 'main/patient_sidebar.html' %}
 
     <div class="patient-form">
-        <h2 class="header-patient">Назначения: {{ patient.patient_name }}</h2>
+        <h3>Назначения: {{ patient.patient_name }}</h3>
 
         <table id="purposesTable">
             <thead>
@@ -55,10 +55,11 @@
                                         </option>
                                     {% endfor %}
                                 </select>
-                                <button type="button" class="delete-med-btn" onclick="removeMedicationSelect(this)">✖</button>
+                                 <button type="button" onclick="removeMedicationSelect(this)">x</button>
+
                             </div>
                             {% endfor %}
-                            <button type="button" class="add-button" onclick="addMedicationSelect(this)">➕</button>
+                            <button type="button" class="add-button" onclick="addMedicationSelect(this)">+</button>
                         </div>
                     </td>
                     <td>
@@ -72,10 +73,10 @@
                                         </option>
                                     {% endfor %}
                                 </select>
-                                <button type="button" class="delete-proc-btn" onclick="removeProcedureSelect(this)">✖</button>
+                                <button type="button" onclick="removeProcedureSelect(this)">x</button>
                             </div>
                             {% endfor %}
-                            <button type="button" class="add-button" onclick="addProcedureSelect(this)">➕</button>
+                            <button type="button" class="add-button" onclick="addProcedureSelect(this)">+</button>
                         </div>
                     </td>
                     <td>
@@ -87,20 +88,23 @@
                     </td>
                     <td>
                         <button class="save-button" onclick="saveRow(this)" disabled>Сохранить</button>
-                        <button class="save-button delete-button" onclick="deleteRow(this)">Удалить</button>
+                        <button class="delete-button" onclick="deleteRow(this)">Удалить</button>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
 
-        <div style="margin-top: 25px;">
-            <button class="add-button" onclick="addRow()">➕ Добавить назначение</button>
+        <div style="margin-top: 20px;">
+            <button class="add-button" onclick="addRow()">+ Добавить назначение</button>
         </div>
     </div>
 </div>
 
-{% block scripts %}
+<script>
+const savePurposeUrl = "{% url 'save_purpose_row' patient.patient_id %}";
+const deletePurposeUrlBase = "/patients/{{ patient.patient_id }}/purpose/delete/";
+const csrfToken = "{{ csrf_token }}";
+</script>
 <script src="{% static 'JavaScript/patient_purpose.js' %}"></script>
-{% endblock %}
 {% endblock %}

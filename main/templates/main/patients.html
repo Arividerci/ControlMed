@@ -61,15 +61,15 @@
     <div id="table-view">
         <table id="patientTable">
             <thead>
-            <tr>
-                <th><input type="checkbox" id="select-all" onchange="toggleAllRows(this)"></th>
-                <th class="sortable" onclick="sortTable(this)" data-col="1">ФИО</th>
-                <th class="sortable" onclick="sortTable(this)" data-col="2">Дата рождения</th>
-                <th class="sortable" onclick="sortTable(this)" data-col="3">Пол</th>
-                <th class="sortable" onclick="sortTable(this)" data-col="4">Рост</th>
-                <th class="sortable" onclick="sortTable(this)" data-col="5">Вес</th>
-                <th class="sortable" onclick="sortTable(this)" data-col="6">Группа крови</th>
-            </tr>
+                <tr>
+                    <th><input type="checkbox" id="select-all" onchange="toggleAllRows(this)"></th>
+                    <th class="sortable" onclick="sortTable(this)" data-col="1">ФИО</th>
+                    <th class="sortable" onclick="sortTable(this)" data-col="2">Дата рождения</th>
+                    <th class="sortable" onclick="sortTable(this)" data-col="3">Пол</th>
+                    <th class="sortable" onclick="sortTable(this)" data-col="4">Рост</th>
+                    <th class="sortable" onclick="sortTable(this)" data-col="5">Вес</th>
+                    <th class="sortable" onclick="sortTable(this)" data-col="6">Группа крови</th>
+                </tr>
             </thead>
             <tbody>
             {% for p in patients %}

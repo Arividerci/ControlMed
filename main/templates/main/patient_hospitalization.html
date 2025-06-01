@@ -1,6 +1,5 @@
 {% extends 'main/base.html' %}
 {% block title %}Госпитализация пациента{% endblock %}
-
 {% load static %}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'CSS/patient_detail.css' %}">
@@ -11,13 +10,62 @@
     {% include 'main/patient_sidebar.html' %}
 
     <div class="patient-form">
-        <h3>Госпитализация: {{ patient.patient_name }}</h3>
+        <div class="header-row">
+            <div class="patient-identity">
+                <h2>{{ patient.patient_name }}</h2>
+                {% if hospitalization %}
+                    <p class="patient-id">Статус: <strong style="color: green">Активна</strong></p>
+                {% else %}
+                    <p class="patient-id">Статус: <strong style="color: gray">Неактивна</strong></p>
+                {% endif %}
 
-        <form method="post">
+            </div>
+        </div>
+
+        <form method="post" id="hospitalizationForm">
             {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="save-button">Сохранить</button>
+            <input type="hidden" name="form_type" value="hospitalization">
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_hospitalization_room">Палата</label>
+                    <input type="number"
+                           name="hospitalization_room"
+                           id="id_hospitalization_room"
+                           value="{{ form.hospitalization_room.value }}"
+                           data-original="{{ form.hospitalization_room.value }}"
+                           class="form-control" />
+                </div>
+
+                <div class="form-group">
+                    <label for="id_hospitalization_startdate">Дата поступления</label>
+                    <input type="date"
+                           name="hospitalization_startdate"
+                           id="id_hospitalization_startdate"
+                           value="{{ form.hospitalization_startdate.value|date:'Y-m-d' }}"
+                           data-original="{{ form.hospitalization_startdate.value|date:'Y-m-d' }}"
+                           class="form-control" />
+                </div>
+
+                <div class="form-group">
+                    <label for="id_hospitalization_enddate">Дата выписки</label>
+                    <input type="date"
+                           name="hospitalization_enddate"
+                           id="id_hospitalization_enddate"
+                           value="{{ form.hospitalization_enddate.value|date:'Y-m-d'  }}"
+                           data-original="{{ form.hospitalization_enddate.value|date:'Y-m-d'  }}"
+                           class="form-control" />
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="save-button" id="hospitalizationSaveBtn" disabled>Сохранить</button>
+            </div>
         </form>
     </div>
 </div>
+
+{% block scripts %}
+<script src="{% static 'JavaScript/patient_detail.js' %}"></script>
+{% endblock %}
 {% endblock %}

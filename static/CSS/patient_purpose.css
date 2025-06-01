@@ -1,137 +1,83 @@
-/* Контейнер формы назначения */
-.patient-form {
-    background: #fff;
+/* patient_purpose.css */
+.patient-layout {
+    display: flex;
+    gap: 30px;
     padding: 30px;
-    border-radius: 14px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.patient-form {
     width: 100%;
 }
 
-/* Таблица назначений */
-#purposesTable {
+table {
     width: 100%;
     border-collapse: collapse;
-    background-color: #fff;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 0 12px rgba(0, 0, 0, 0.05);
-    margin-bottom: 25px;
+    margin-top: 25px;
 }
 
-#purposesTable thead {
-    background-color: #d76b49;
-}
-
-#purposesTable th,
-#purposesTable td {
-    padding: 12px 16px;
-    font-size: 14px;
+th, td {
+    padding: 10px;
+    border: 1px solid #ddd;
     text-align: left;
+    vertical-align: top;
 }
 
-#purposesTable th {
-    color: white;
-    font-weight: bold;
-}
-
-#purposesTable tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-/* Кнопка сохранения */
-.save-button {
+th {
     background-color: #d76b49;
     color: white;
-    padding: 8px 16px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 14px;
-    margin: 2px 4px;
 }
 
-.save-button:hover:not(:disabled) {
-    background-color: #ba5f3f;
+.save-button, .delete-button, .add-button {
+    background-color: #fd7e50;
+    color: white;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
 }
 
 .save-button:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
+    opacity: 0.5;
+    cursor: default;
 }
 
-/* Кнопка удаления */
 .delete-button {
-    background-color: #ffffff;
-    color: #d76b49;
-    border: 1px solid #d76b49;
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
+    background-color: #dc3545;
 }
 
-.delete-button:hover {
-    background-color: #ffe2da;
-}
-
-/* Добавить назначение */
-.add-bottom-patient {
-    margin-top: 20px;
-}
-
-.add-bottom-patient button {
-    background-color: #d76b49;
-    border: none;
-    color: white;
-    font-weight: bold;
-    padding: 10px 20px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.add-bottom-patient button:hover {
-    background-color: white;
-    color: #d76b49;
-    border: 1px solid #d76b49;
-}
-
-/* Селекты и инпуты */
-input[type="text"],
-input[type="number"],
-input[type="date"],
-select {
+.form-select {
+    padding: 6px;
+    border-radius: 5px;
     width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
     font-size: 14px;
-    box-sizing: border-box;
 }
 
-/* Медикаменты и процедуры */
-.inline-selects {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+.inline-selects > div {
+    margin-bottom: 5px;
 }
 
 .medications-wrapper,
 .procedures-wrapper {
-    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
 
 .medication-select-wrapper,
 .procedure-select-wrapper {
-    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
-.remove-select {
-    position: absolute;
-    right: -25px;
-    top: 6px;
-    color: #d76b49;
-    font-weight: bold;
+.medication-select-wrapper button,
+.procedure-select-wrapper button {
+    padding: 4px 8px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
     cursor: pointer;
+    font-size: 14px;
 }

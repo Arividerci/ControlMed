@@ -5,5 +5,7 @@
        class="patient-sidebar-item {% if active_page == 'hospitalization' %}active{% endif %}">Госпитализация</a>
     <a href="{% url 'patient_purpose' patient.patient_id %}" 
        class="patient-sidebar-item {% if active_page == 'purpose' %}active{% endif %}">Назначения</a>
+    <a href="{% url 'patient_medbook' patient.patient_id %}" 
+       class="patient-sidebar-item {% if active_page == 'medbook' %}active{% endif %}"> Медицинская карта</a>
     <a href="{% url 'patients' %}" class="patient-sidebar-back">Вернуться к пациентам</a>
 </div>
