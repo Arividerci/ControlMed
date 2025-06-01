@@ -1,10 +1,11 @@
 {% extends 'main/base.html' %}
-{% load static %}
 
+{% load static %}
 {% block title %}Задания{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'CSS/patient_detail.css' %}">
+<link rel="stylesheet" href="{% static 'CSS/assignments.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -21,7 +22,8 @@
         {% endif %}
 
         {% if assignments %}
-        <table class="styled-table">
+        
+        <table>
             <thead>
                 <tr>
                     <th>Пациент</th>
@@ -29,28 +31,42 @@
                     <th>Длительность</th>
                     <th>Статус</th>
                     <th>Диагноз</th>
-                    <th>Лечащий врач</th> <!-- Новый столбец -->
+                    {% if staff.medical_staff_post == 'Главврач' %}
+                        <th>Работник</th>
+                        <th>ФИО Работника</th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
-                {% for a in assignments %}
-                <tr>
-                    <td>{{ a.hospitalization.patient.patient_name }}</td>
-                    <td>{{ a.purpose_startdate|date:"d.m.Y" }}</td>
-                    <td>{{ a.purpose_duration }}</td>
-                    <td>{{ a.purpose_status }}</td>
-                    <td>{{ a.purpose_diagnosis }}</td>
-                    <td>{{ a.hospitalization.medical_staff.medical_staff_name }}</td> <!-- Лечащий врач -->
-                </tr>
+                {% for assignment in assignments %}
+                    <tr>
+                        <td>{{ assignment.hospitalization.patient.patient_name }}</td>
+                        <td>{{ assignment.purpose_startdate }}</td>
+                        <td>{{ assignment.purpose_duration }}</td>
+                        <td>{{ assignment.purpose_status }}</td>
+                        <td>{{ assignment.purpose_diagnosis }}</td>
+                        {% if staff.medical_staff_post == 'Главврач' %}
+                            <td>
+                                {% if assignment.medical_staff %}
+                                    {{ assignment.medical_staff.medical_staff_post }}
+                                {% else %}
+                                    Не назначен
+                                {% endif %}
+                            </td>
+                            <td>{{ assignment.medical_staff.medical_staff_name }}</td>
+                        {% endif %}
+                    </tr>
                 {% endfor %}
             </tbody>
         </table>
 
         <div class="export-button-container">
-            <form method="post" action="{% url 'export_assignments' %}">
-                {% csrf_token %}
-                <button type="submit" class="export-button">Экспортировать в CSV</button>
-            </form>
+            {% if staff.medical_staff_post == 'Главврач' %}
+                <form method="post" action="{% url 'export_assignments' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="export-button">Экспортировать в CSV</button>
+                </form>
+            {% endif %}
         </div>
         {% else %}
             <p>Заданий нет.</p>
