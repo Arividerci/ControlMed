@@ -909,55 +909,87 @@ def active_procedures(request):
     })
 
 
-@login_required
-def add_procedure_execution(request):
-    staff = MedicalStaff.objects.get(user=request.user)
-    
-    # Получаем все активные процедуры
-    active_procedures = Procedures.objects.filter(
-        purpose__purpose_status__in=['Активный', 'Приостановлен'],
-        purpose__purpose_startdate__lte=date.today(),  # Начало назначения до сегодняшнего дня
-        purpose__purpose_enddate__gte=date.today()  # Конец назначения после сегодняшнего дня
-    )
 
+@login_required
+def add_procedure(request):
     if request.method == 'POST':
-        form = ProceduresExecutionForm(request.POST)
-        if form.is_valid():
-            procedure_execution = form.save(commit=False)
-            procedure_execution.medical_staff = staff  # Текущий медицинский сотрудник
-            procedure_execution.procedures_execution_date = date.today()  # Текущая дата
-            procedure_execution.save()
-            return redirect('procedures_list')  # Перенаправляем на список процедур
+        procedures_id = request.POST.get('procedures_id')  # Используем 'procedures_id'
+        duration = request.POST.get('procedures_execution_duration')
+        comment = request.POST.get('procedures_execution_comment')
+        status = request.POST.get('procedures_execution_status')
 
-    else:
-        form = ProceduresExecutionForm()
+        medical_staff = MedicalStaff.objects.get(user=request.user)  # Получаем текущего медработника
 
-    return render(request, 'main/procedures_execution_form.html', {
-        'form': form,
-        'active_procedures': active_procedures,
-    })
+        # Создаем запись в таблице procedures_execution
+        ProceduresExecution.objects.create(
+            procedures_id=procedures_id,  # Используем правильное имя поля 'procedures_id'
+            medical_staff_id=medical_staff,  # Передаем объект staff
+            procedures_execution_date=date.today(),
+            procedures_execution_duration=duration,
+            procedures_execution_comment=comment,
+            procedures_execution_status=status
+        )
+
+        return redirect('procedures')  # Перенаправляем на страницу процедур (можно изменить на нужный путь)
+
+    # Если запрос GET, то просто отображаем форму
+    procedures_list = Procedures.objects.all()  # Получаем все процедуры
+    return render(request, 'main/procedures.html', {'procedures_list': procedures_list})
 
 @login_required
-def add_procedure_view(request):
-    # Получаем активные назначения для пользователя
-    medical_staff = MedicalStaff.objects.get(user=request.user)
+def procedures_view(request):
+    staff = MedicalStaff.objects.get(user=request.user)  # Получаем текущего медицинского сотрудника
+    today = date.today()  # Получаем сегодняшнюю дату
 
-    # Находим все активные назначения с процедурами, которые связаны с медицинским работником
-    active_procedures = Purpose.objects.filter(
-        medical_staff=medical_staff,
-        purpose_status="Активный"
-    ).prefetch_related('procedures')
+    # Получаем все назначения для текущего сотрудника
+    assignments = []
 
-    procedures_list = []
-    for purpose in active_procedures:
-        for procedure in purpose.procedures.all():  # Получаем все процедуры из назначения
-            procedures_list.append(procedure)
+    # Для сотрудников (не для главврача), у которых дата начала <= сегодняшняя дата <= дата окончания
+    if staff.medical_staff_post != 'Главврач':
+        assignments = Purpose.objects.filter(
+            purpose_status__in=['Активный', 'Приостановлен'],
+            hospitalization__medical_staff=staff,  # Привязка к медицинскому сотруднику
+            purpose_startdate__lte=today,  # Начало назначения раньше или равно сегодняшней дате
+        ).select_related('hospitalization', 'hospitalization__patient').distinct('hospitalization')
 
-    # Формируем форму
-    form = ProceduresExecutionForm()
+        # Загружаем процедуры для каждого назначения
+        procedures_ids = []
+        for assignment in assignments:
+            # Проверяем, попадает ли сегодняшняя дата в промежуток от начала до конца
+            end_date = assignment.purpose_startdate + timedelta(days=assignment.purpose_duration)
+            if assignment.purpose_startdate <= today <= end_date:
+                # Получаем процедуры для назначения
+                procedures_ids.extend(
+                    IncludesConducting.objects.filter(purpose_id=assignment.purpose_id).values_list('procedures_id', flat=True)
+                )
+
+        # Получаем все процедуры, которые привязаны к назначениям текущего сотрудника
+        procedures_list = Procedures.objects.filter(procedures_id__in=procedures_ids)
+
+    # Для главврача загружаем все назначения, но с фильтрацией по дате начала и окончания
+    elif staff.medical_staff_post == 'Главврач':
+        assignments = Purpose.objects.filter(
+            purpose_status__in=['Активный', 'Приостановлен', 'Завершено'],
+            purpose_startdate__lte=today,  # Начало назначения раньше или равно сегодняшней дате
+        ).select_related('hospitalization', 'hospitalization__patient')
+
+        # Загружаем процедуры для каждого назначения
+        procedures_ids = []
+        for assignment in assignments:
+            # Проверяем, попадает ли сегодняшняя дата в промежуток от начала до конца
+            end_date = assignment.purpose_startdate + timedelta(days=assignment.purpose_duration)
+            if assignment.purpose_startdate <= today <= end_date:
+                # Получаем процедуры для назначения
+                procedures_ids.extend(
+                    IncludesConducting.objects.filter(purpose_id=assignment.purpose_id).values_list('procedures_id', flat=True)
+                )
+
+        # Получаем все процедуры
+        procedures_list = Procedures.objects.filter(procedures_id__in=procedures_ids)
+
+    # Отображаем страницу с процедурами
     return render(request, 'main/procedures.html', {
-        'form': form,
-        'procedures_list': procedures_list
+        'procedures_list': procedures_list,
     })
 
 

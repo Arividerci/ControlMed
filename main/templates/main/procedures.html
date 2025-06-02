@@ -20,25 +20,24 @@
     <!-- Модальная форма или карточка для ввода процедуры -->
     <div id="procedure-form" style="display: none;">
         <h3>Добавление выполненной процедуры</h3>
+        <!-- HTML шаблон -->
         <form method="POST">
             {% csrf_token %}
-            <!-- Список процедур -->
+
             <label for="procedure">Выберите процедуру:</label>
-           <select name="procedure_id">
+            <select name="procedure_id" id="procedure" class="form-control">
                 {% for procedure in procedures_list %}
                     <option value="{{ procedure.id }}">{{ procedure.procedures_name }}</option>
                 {% endfor %}
             </select>
+
             
-            <!-- Продолжительность -->
             <label for="procedures_execution_duration">Длительность процедуры:</label>
-            <input type="number" name="procedures_execution_duration" class="form-control" step="0.1">
+            <input type="number" name="procedures_execution_duration" class="form-control" step="0.1" required>
 
-            <!-- Комментарий -->
             <label for="procedures_execution_comment">Комментарий:</label>
-            <textarea name="procedures_execution_comment" class="form-control"></textarea>
+            <textarea name="procedures_execution_comment" class="form-control" required></textarea>
 
-            <!-- Статус -->
             <label for="procedures_execution_status">Статус:</label>
             <select name="procedures_execution_status" class="form-control">
                 <option value="В ожидании">В ожидании</option>
