@@ -1,5 +1,5 @@
 from .models import Patient, MedicalStaff, MedicalBook, Hospitalization, Purpose, Medication, Procedures, IncludesReception, IncludesConducting, MedicalBookContent, ProceduresExecution
-from .forms import RegisterStep1Form, RegisterStep2Form, LoginForm, AddPatientForm,  HospitalizationForm, PurposeForm
+from .forms import RegisterStep1Form, RegisterStep2Form, LoginForm, AddPatientForm,  HospitalizationForm, PurposeForm, ProceduresExecutionForm
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -860,3 +860,36 @@ def procedures_view(request):
     # Логика для получения данных о процедурах
     procedures = Procedures.objects.all()  # Получаем все процедуры, можно фильтровать по нужному критерию
     return render(request, 'main/procedures.html', {'procedures': procedures})
+
+
+@login_required
+def active_procedures(request):
+    # Получаем текущего медицинского сотрудника
+    staff = MedicalStaff.objects.get(user=request.user)
+    
+    # Получаем все активные назначения для текущего сотрудника
+    active_assignments = Purpose.objects.filter(
+        purpose_status__in=['Активный', 'Приостановлен'],
+        purpose_startdate__lte=date.today(),
+        purpose_enddate__gte=date.today(),
+        hospitalization__medical_staff=staff
+    )
+
+    # Получаем все активные процедуры, связанные с назначениями
+    active_procedures = Procedures.objects.filter(
+        purpose__in=active_assignments
+    )
+
+    if request.method == 'POST':
+        form = ProceduresExecutionForm(request.POST)
+        if form.is_valid():
+            form.save()  # Сохраняем выполнение процедуры
+            return redirect('procedures')  # Перенаправление на страницу процедур
+
+    else:
+        form = ProceduresExecutionForm()
+
+    return render(request, 'main/procedures.html', {
+        'active_procedures': active_procedures,
+        'form': form,
+    })

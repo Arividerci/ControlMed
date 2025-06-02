@@ -2,7 +2,7 @@ import datetime
 
 from django import forms
 from django.contrib.auth.models import User
-from .models import Patient, MedicalStaff, Hospitalization, Purpose, Procedures, Medication
+from .models import Patient, MedicalStaff, Hospitalization, Purpose, Procedures, Medication, ProceduresExecution
 
 
 from django.core.exceptions import ValidationError
@@ -115,6 +115,12 @@ class PurposeForm(forms.ModelForm):
 class LoginForm(forms.Form):
     username = forms.CharField(label="Логин")
     password = forms.CharField(widget=forms.PasswordInput, label="Пароль")
+
+
+class ProceduresExecutionForm(forms.ModelForm):
+    class Meta:
+        model = ProceduresExecution
+        fields = ['procedures', 'procedures_execution_date', 'procedures_execution_duration', 'procedures_execution_status', 'procedures_execution_comment']
 
 class RegisterStep2Form(forms.ModelForm):
     GENDER_CHOICES = [
