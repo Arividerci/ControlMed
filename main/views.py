@@ -706,43 +706,82 @@ def medications_view(request):
     # Пока можно просто вернуть пустой шаблон или добавить свою логику
     return render(request, 'main/medications.html')
 
+from datetime import date, timedelta
+
 @login_required
 def assignments_view(request):
     staff = MedicalStaff.objects.get(user=request.user)  # Получаем текущего медицинского сотрудника
+    today = date.today()  # Получаем сегодняшнюю дату
 
-    # Получаем все назначения для главврача
+    # Инициализация переменной assignments
+    assignments = []
+
+    # Получаем назначения только для сотрудников (не для главврача), у которых дата начала <= сегодняшняя дата <= дата окончания
+    if staff.medical_staff_post != 'Главврач':
+        assignments = Purpose.objects.filter(
+            purpose_status__in=['Активный', 'Приостановлен'],  # Только активные и приостановленные назначения
+            hospitalization__medical_staff=staff,  # Привязка к медицинскому сотруднику
+            purpose_startdate__lte=today,  # Начало назначения раньше или равно сегодняшней дате
+        ).select_related('hospitalization', 'hospitalization__patient').distinct('hospitalization')
+
+        # Загружаем медикаменты и процедуры для каждого назначения
+        for assignment in assignments:
+            # Вычисляем конечную дату назначения
+            end_date = assignment.purpose_startdate + timedelta(days=assignment.purpose_duration)
+
+            # Проверяем, попадает ли сегодняшняя дата в промежуток от начала до конца
+            if assignment.purpose_startdate <= today <= end_date:
+                # Получаем медикаменты для назначения
+                assignment.medications = Medication.objects.filter(
+                    medication_id__in=IncludesReception.objects.filter(purpose_id=assignment.purpose_id).values('medication_id')
+                )
+
+                # Получаем процедуры для назначения
+                assignment.procedures = Procedures.objects.filter(
+                    procedures_id__in=IncludesConducting.objects.filter(purpose_id=assignment.purpose_id).values('procedures_id')
+                )
+
+                # Получаем врача и помощника для каждого назначения
+                assignment.doctor = MedicalStaff.objects.get(medical_staff_id=assignment.medical_staff_id)
+
+                # Получаем медсестру или медбрата как помощника
+                assignment.assistant = MedicalStaff.objects.filter(
+                    medical_staff_post__in=['Медсестра', 'Медбрат'],
+                    user=assignment.medical_staff.user
+                ).first()
+
+    # Для главврача загружаем все назначения, но с фильтрацией по дате начала и окончания
     if staff.medical_staff_post == 'Главврач':
         assignments = Purpose.objects.filter(
-            purpose_status__in=['Активный', 'Приостановлен', 'Завершено']
-        ).select_related('hospitalization', 'hospitalization__patient')
-    else:
-        assignments = Purpose.objects.filter(
-            purpose_status__in=['Активный', 'Приостановлен'],
-            hospitalization__medical_staff=staff
+            purpose_status__in=['Активный', 'Приостановлен', 'Завершено'],
+            purpose_startdate__lte=today,  # Начало назначения раньше или равно сегодняшней дате
         ).select_related('hospitalization', 'hospitalization__patient')
 
-    # Загружаем медикаменты и процедуры для каждого назначения
-    for assignment in assignments:
-        # Получаем медикаменты для назначения
-        assignment.medications = Medication.objects.filter(
-            medication_id__in=IncludesReception.objects.filter(purpose_id=assignment.purpose_id).values('medication_id')
-        )
-        
-        # Получаем процедуры для назначения
-        assignment.procedures = Procedures.objects.filter(
-            procedures_id__in=IncludesConducting.objects.filter(purpose_id=assignment.purpose_id).values('procedures_id')
-        )
+        # Загружаем медикаменты и процедуры для каждого назначения
+        for assignment in assignments:
+            # Вычисляем конечную дату назначения
+            end_date = assignment.purpose_startdate + timedelta(days=assignment.purpose_duration)
 
-        # Получаем врача и помощника для каждого назначения
-        if staff.medical_staff_post == 'Главврач':
-            # Получаем имя и должность врача
-            assignment.doctor = MedicalStaff.objects.get(medical_staff_id=assignment.medical_staff_id)
-            
-            # Получаем медсестру или медбрата как помощника
-            assignment.assistant = MedicalStaff.objects.filter(
-                medical_staff_post__in=['Медсестра', 'Медбрат'],
-                user=assignment.medical_staff.user
-            ).first()
+            # Проверяем, попадает ли сегодняшняя дата в промежуток от начала до конца
+            if assignment.purpose_startdate <= today <= end_date:
+                # Получаем медикаменты для назначения
+                assignment.medications = Medication.objects.filter(
+                    medication_id__in=IncludesReception.objects.filter(purpose_id=assignment.purpose_id).values('medication_id')
+                )
+
+                # Получаем процедуры для назначения
+                assignment.procedures = Procedures.objects.filter(
+                    procedures_id__in=IncludesConducting.objects.filter(purpose_id=assignment.purpose_id).values('procedures_id')
+                )
+
+                # Получаем врача и помощника для каждого назначения
+                assignment.doctor = MedicalStaff.objects.get(medical_staff_id=assignment.medical_staff_id)
+
+                # Получаем медсестру или медбрата как помощника
+                assignment.assistant = MedicalStaff.objects.filter(
+                    medical_staff_post__in=['Медсестра', 'Медбрат'],
+                    user=assignment.medical_staff.user
+                ).first()
 
     return render(request, 'main/assignments.html', {
         'assignments': assignments,

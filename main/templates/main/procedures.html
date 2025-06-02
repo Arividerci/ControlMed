@@ -8,18 +8,5 @@
 
     <h1>Активные процедуры</h1>
 
-    {% if active_procedures %}
-        <ul>
-            {% for item in active_procedures %}
-                <li>
-                    Назначение: {{ item.assignment.purpose_diagnosis }} <br>
-                    Пациент: {{ item.assignment.hospitalization.patient.patient_name }} <br>
-                    Процедура: {{ item.procedure.procedures_name }}
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>Нет активных процедур для записи.</p>
-    {% endif %}
 </div>
 {% endblock %}
