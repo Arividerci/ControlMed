@@ -46,35 +46,40 @@
                     </div>
                 </form>
             </div>
-
-            <div class="account-actions">
-                <h4>Действия с аккаунтом</h4>
-                <p>Вы можете редактировать или удалить данные.</p>
-                <form method="POST" action="{% url 'delete_medical_staff' %}">
-                    {% csrf_token %}
-                    <button type="submit" class="delete-button" onclick="return confirm('Вы уверены, что хотите удалить свой аккаунт?')">Удалить аккаунт</button>
-                </form>
-            </div>
         </div>
     </div>
 </div>
 
+<script id="staffData" type="application/json">
+    {{ staff|json_script:"staffData" }}
+</script>
+
 {% block scripts %}
 <script>
-    function checkChanges() {
-    const form = document.getElementById("staffForm");
+   function checkChanges() {
     const saveButton = document.getElementById("saveButton");
 
-    const originalData = JSON.parse(document.getElementById("staffData").textContent); 
+    const originalData = JSON.parse(document.getElementById("staffData").textContent);
 
-    const formData = new FormData(form);
-    let changed = false;
+    console.log("Original Data:", originalData);
 
-    formData.forEach((value, key) => {
-        if (originalData[key] !== value) {
-            changed = true;
-        }
+    const currentName = document.getElementById("staff_name").value;
+    const currentPost = document.getElementById("staff_post").value;
+    const currentSpecialisation = document.getElementById("staff_specialisation").value;
+    const currentBirthday = document.getElementById("staff_birthday").value;
+
+    console.log("Current Data:", {
+        currentName, currentPost, currentSpecialisation, currentBirthday
     });
+
+    const changed = (
+        originalData.medical_staff_name !== currentName || 
+        originalData.medical_staff_post !== currentPost || 
+        originalData.medical_staff_specialisation !== currentSpecialisation || 
+        originalData.medical_staff_birthday !== currentBirthday
+    );
+
+    console.log("Changes detected:", changed);
 
     saveButton.disabled = !changed; 
 }

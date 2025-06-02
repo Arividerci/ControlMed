@@ -41,6 +41,8 @@ urlpatterns = [
     path('medications/', views.medications_view, name='medications'),
     path('medications/', views.medications_view, name='medications'),
     path('delete-account/', views.delete_medical_staff, name='delete_medical_staff'),
+    path('generate_selected_patients_report/', views.generate_selected_patients_report, name='generate_selected_patients_report'),
+
 
 ]
 

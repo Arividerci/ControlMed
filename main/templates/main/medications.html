@@ -5,14 +5,32 @@
 {% block title %}Выдача медикаментов{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'CSS/medications.css' %}">
-    <style>.medications-layout {
+    <link rel="stylesheet" href="{% static 'CSS/patient_detail.css' %}">
+    <link rel="stylesheet" href="{% static 'CSS/assignments.css' %}">
+    
+    <style>
+.medications-layout {
     max-width: 1200px;
     margin: 40px auto;
     padding: 30px;
     background-color: #fff;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    display: flex; /* Используем Flexbox для двух колонок */
+    justify-content: space-between; /* Располагаем блоки по бокам */
+}
+
+.medications-content {
+    width: 65%; /* Занимает большую часть контейнера */
+}
+
+.add-medication-form {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    margin-top: 30px;
+    width: 30%; /* Занимает меньшую часть контейнера */
 }
 
 .medications-table {
@@ -35,14 +53,6 @@
 
 .medications-table tr:hover {
     background-color: #f9f9f9;
-}
-
-.add-medication-form {
-    background: #ffffff;
-    padding: 30px;
-    border-radius: 14px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    margin-top: 30px;
 }
 
 .form-group {
@@ -92,61 +102,65 @@
 {% endblock %}
 
 {% block content %}
-<div class="medications-layout">
-    <h2>Выдача медикаментов</h2>
 
-    <!-- Таблица с записями выдачи медикаментов -->
-    <table class="medications-table">
-        <thead>
-            <tr>
-                <th>Дата выдачи</th>
-                <th>Медикамент</th>
-                <th>Доза</th>
-                <th>Статус</th>
-                <th>Комментарий</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for medication_dispensing in medications_dispensing %}
-                <tr>
-                    <td>{{ medication_dispensing.medication_dispensing_date }}</td>
-                    <td>{{ medication_dispensing.medication_id.medication_name }}</td>
-                    <td>{{ medication_dispensing.medication_dispensing_dose }}</td>
-                    <td>{{ medication_dispensing.medication_dispensing_status }}</td>
-                    <td>{{ medication_dispensing.medication_dispensing_comment }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div class="patient-layout">
+    {% include 'main/assignments_sidebar.html' %}
 
-    <h3>Добавить выдачу медикамента</h3>
+    <div class="patient-content">
+        <h2>Записи выдачи медикаментов</h2>
+        
+        <table class="procedures-table">
+                <thead>
+                    <tr>
+                        <th>Дата выдачи</th>
+                        <th>Медикамент</th>
+                        <th>Доза</th>
+                        <th>Статус</th>
+                        <th>Комментарий</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for medication_dispensing in medications_dispensing %}
+                        <tr>
+                            <td>{{ medication_dispensing.medication_dispensing_date }}</td>
+                            <td>{{ medication_dispensing.medication_id.medication_name }}</td>
+                            <td>{{ medication_dispensing.medication_dispensing_dose }}</td>
+                            <td>{{ medication_dispensing.medication_dispensing_status }}</td>
+                            <td>{{ medication_dispensing.medication_dispensing_comment }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
 
-    <!-- Форма для добавления новой записи о выдаче медикамента -->
-    <form method="post" class="add-medication-form">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="id_medication_id">Медикамент:</label>
-            {{ form.medication_id }}
+            <h3>Добавить выдачу медикамента</h3>
+
+            <!-- Форма для добавления новой записи о выдаче медикамента -->
+            <form method="post" class="add-medication-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_medication_id">Медикамент:</label>
+                    {{ form.medication_id }}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_medication_dispensing_dose">Доза:</label>
+                    {{ form.medication_dispensing_dose }}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_medication_dispensing_comment">Комментарий:</label>
+                    {{ form.medication_dispensing_comment }}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_medication_dispensing_status">Статус:</label>
+                    {{ form.medication_dispensing_status }}
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="submit-button">Добавить выдачу медикамента</button>
+                </div>
+            </form>
         </div>
-
-        <div class="form-group">
-            <label for="id_medication_dispensing_dose">Доза:</label>
-            {{ form.medication_dispensing_dose }}
-        </div>
-
-        <div class="form-group">
-            <label for="id_medication_dispensing_comment">Комментарий:</label>
-            {{ form.medication_dispensing_comment }}
-        </div>
-
-        <div class="form-group">
-            <label for="id_medication_dispensing_status">Статус:</label>
-            {{ form.medication_dispensing_status }}
-        </div>
-
-        <div class="form-actions">
-            <button type="submit" class="submit-button">Добавить выдачу медикамента</button>
-        </div>
-    </form>
-</div>
+    </div>
 {% endblock %}

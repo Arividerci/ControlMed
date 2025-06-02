@@ -10,8 +10,6 @@
 <div class="page-container-patient">
 
     <h2 class="header-patient">Список пациентов</h2>
-
-    <!-- Панель управления таблицей и карточками -->
     <div class="table-toolbar">
         <div class="table-toolbar-left">
             <button class="tab-btn active" onclick="switchView('table', this)">Таблица</button>
@@ -121,12 +119,9 @@
         </div>
     </div>
 
-    <!-- Плавающая панель массовых действий -->
-    <div id="batch-panel" class="batch-panel" style="display:none;">
+   <div id="batch-panel" class="batch-panel" style="display:none;">
         <span id="selected-count">0 выбрано</span>
         <button onclick="batchDelete()">Удалить</button>
-        <button onclick="batchPrint()">Печать</button>
-        <button onclick="batchSend()">Отправить</button>
     </div>
 
 </div>

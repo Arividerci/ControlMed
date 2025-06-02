@@ -55,42 +55,34 @@ def generate_report(request):
 
     assignments = Purpose.objects.all().select_related('hospitalization', 'hospitalization__patient', 'medical_staff')
 
-    # Создание PDF ответа
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="assignments_report.pdf"'
 
-    # Создание объекта canvas
     p = canvas.Canvas(response, pagesize=letter)
     width, height = letter
 
-    # Путь к TTF шрифту (убедитесь, что путь к файлу корректный)
     font_path = os.path.join('static', 'fonts', 'Arial.ttf')
     
     if os.path.exists(font_path):
-        # Регистрируем шрифт с поддержкой кириллицы
         pdfmetrics.registerFont(TTFont('Arial', font_path))
         p.setFont('Arial', 12)
     else:
-        # Если шрифт не найден, используем стандартный шрифт
         p.setFont("Helvetica", 12)
 
-    # Заголовок отчета
     p.setFont("Arial", 16)
     p.drawString(100, height - 50, "Отчет по заданиям")
 
     y_position = height - 80
     for assignment in assignments:
-        # Формирование текста для каждой записи
         patient_name = assignment.hospitalization.patient.patient_name
         diagnosis = assignment.purpose_diagnosis
         start_date = assignment.purpose_startdate
         duration = assignment.purpose_duration
         status = assignment.purpose_status
-        medical_staff = assignment.medical_staff  # Получаем медицинского работника по связи
+        medical_staff = assignment.medical_staff  
         doctor_name = medical_staff.medical_staff_name if medical_staff else "Неизвестен"
         doctor_post = medical_staff.medical_staff_post if medical_staff else "Неизвестен"
 
-        # Вывод информации о назначении в виде текста
         p.setFont("Arial", 10)
         p.drawString(50, y_position, f"Пациент: {patient_name}")
         y_position -= 15
@@ -103,20 +95,53 @@ def generate_report(request):
         p.drawString(50, y_position, f"Статус: {status}")
         y_position -= 15
         p.drawString(50, y_position, f"Назначение выполнял(а): {doctor_post} {doctor_name}")
-        y_position -= 20  # Отступ для следующей записи
+        y_position -= 20  
 
-        # Добавляем новую страницу, если места не хватает
         if y_position < 100:
             p.showPage()
             y_position = height - 100
 
-    # Завершаем создание PDF
     p.showPage()
     p.save()
 
     return response
+@login_required
+def generate_selected_patients_report(request):
+    if request.method == 'POST':
+        patient_ids = json.loads(request.body).get('ids', [])
+        patients = Patient.objects.filter(id__in=patient_ids)
 
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="patients_report.pdf"'
 
+        p = canvas.Canvas(response, pagesize=letter)
+        width, height = letter
+
+        p.setFont("Helvetica", 12)
+        p.drawString(100, height - 50, "Отчет по выбранным пациентам")
+
+        y_position = height - 80
+        for patient in patients:
+            p.drawString(50, y_position, f"ФИО: {patient.patient_name}")
+            y_position -= 15
+            p.drawString(50, y_position, f"Дата рождения: {patient.patient_birthday}")
+            y_position -= 15
+            p.drawString(50, y_position, f"Пол: {patient.patient_gender}")
+            y_position -= 15
+            p.drawString(50, y_position, f"Рост: {patient.patient_height} см")
+            y_position -= 15
+            p.drawString(50, y_position, f"Вес: {patient.patient_weight} кг")
+            y_position -= 20
+
+            if y_position < 100:
+                p.showPage()
+                y_position = height - 100
+
+        p.showPage()
+        p.save()
+
+        return response
+    
 @login_required
 def generate_hospitalization_report(request):
     staff = MedicalStaff.objects.get(user=request.user)
@@ -126,41 +151,33 @@ def generate_hospitalization_report(request):
 
     hospitalizations = Hospitalization.objects.all().select_related('patient', 'medical_staff')
 
-    # Создание PDF ответа
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="hospitalization_report.pdf"'
 
-    # Создание объекта canvas
     p = canvas.Canvas(response, pagesize=letter)
     width, height = letter
 
-    # Путь к TTF шрифту (убедитесь, что путь к файлу корректный)
     font_path = os.path.join('static', 'fonts', 'Arial.ttf')
     
     if os.path.exists(font_path):
-        # Регистрируем шрифт с поддержкой кириллицы
         pdfmetrics.registerFont(TTFont('Arial', font_path))
         p.setFont('Arial', 12)
     else:
-        # Если шрифт не найден, используем стандартный шрифт
         p.setFont("Helvetica", 12)
 
-    # Заголовок отчета
     p.setFont("Arial", 16)
     p.drawString(100, height - 50, "Отчет по госпитализациям")
 
     y_position = height - 80
     for hospitalization in hospitalizations:
-        # Формирование текста для каждой записи
         patient_name = hospitalization.patient.patient_name
         start_date = hospitalization.hospitalization_startdate
         end_date = hospitalization.hospitalization_enddate
         room = hospitalization.hospitalization_room
-        medical_staff = hospitalization.medical_staff  # Получаем медицинского работника по связи
+        medical_staff = hospitalization.medical_staff  
         staff_name = medical_staff.medical_staff_name if medical_staff else "Неизвестен"
         staff_post = medical_staff.medical_staff_post if medical_staff else "Неизвестен"
 
-        # Вывод информации о госпитализации в виде текста
         p.setFont("Arial", 10)
         p.drawString(50, y_position, f"Пациент: {patient_name}")
         y_position -= 15
@@ -171,9 +188,8 @@ def generate_hospitalization_report(request):
         p.drawString(50, y_position, f"Палата: {room}")
         y_position -= 15
         p.drawString(50, y_position, f"Госпитализацию провел(а) ФИО: {staff_post} {staff_name}")
-        y_position -= 20  # Отступ для следующей записи
-
-        # Добавляем новую страницу, если места не хватает
+        y_position -= 20 
+        
         if y_position < 100:
             p.showPage()
             y_position = height - 100
@@ -187,24 +203,18 @@ def generate_hospitalization_report(request):
 def assignments_view(request):
     staff = MedicalStaff.objects.get(user=request.user)
 
-    # Фильтрация назначений для главврача или текущего медицинского персонала
     assignments = Purpose.objects.filter(
         purpose_status__in=['Активный', 'Приостановлен'] if staff.medical_staff_post != 'Главврач' else ['Активный', 'Приостановлен', 'Завершено'],
         hospitalization__medical_staff=staff
     ).select_related('hospitalization', 'hospitalization__patient')
 
-    # Отладка: выводим количество назначений
     print(f"Найдено назначений: {assignments.count()}")
 
-    # Для главврача нужно также загрузить медикаменты и процедуры
     if staff.medical_staff_post == 'Главврач':
         for assignment in assignments:
-            # Загружаем медикаменты
             assignment.medications = IncludesReception.objects.filter(purpose=assignment).select_related('medication')
-            # Загружаем процедуры
             assignment.procedures = IncludesConducting.objects.filter(purpose=assignment).select_related('procedures')
 
-            # Отладка: выводим количество медикаментов и процедур для каждого назначения
             print(f"Назначение {assignment.purpose_id} имеет {assignment.medications.count()} медикаментов и {assignment.procedures.count()} процедур")
 
     return render(request, 'main/assignments.html', {
@@ -232,14 +242,19 @@ def edit_profile(request):
 
 @login_required
 def delete_medical_staff(request):
-    staff = MedicalStaff.objects.get(user=request.user)  # Получаем текущего сотрудника
+    staff = MedicalStaff.objects.get(user=request.user)  
 
     if request.method == 'POST':
-        staff.delete()  # Удаляем сотрудника
-        messages.success(request, 'Ваш аккаунт был успешно удален.')
-        return redirect('login')  # Перенаправляем на страницу входа
+        Purpose.objects.filter(medical_staff=staff).delete()
+        MedicalBookContent.objects.filter(purpose__medical_staff=staff).delete()
+        IncludesReception.objects.filter(purpose__medical_staff=staff).delete()
+        IncludesConducting.objects.filter(purpose__medical_staff=staff).delete()
 
-    return redirect('cabinet')  # Если запрос не POST, возвращаем на страницу кабинета
+        staff.delete()  
+        messages.success(request, 'Ваш аккаунт был успешно удален.')
+        return redirect('login')  
+
+    return redirect('cabinet') 
 
 @login_required
 def delete_account(request):
@@ -411,11 +426,9 @@ def register_step2(request):
         form = RegisterStep2Form()
 
     return render(request, 'main/register_step2.html', {'form': form})
-@login_required
-def cabinet(request):
-    staff = MedicalStaff.objects.get(user=request.user)  # Получаем текущего медицинского сотрудника
 
-    # Передаем только нужные поля для JSON сериализации
+def cabinet(request):
+    staff = MedicalStaff.objects.get(user=request.user)  
     staff_data = {
         'medical_staff_name': staff.medical_staff_name,
         'medical_staff_post': staff.medical_staff_post,
@@ -424,7 +437,6 @@ def cabinet(request):
     }
 
     return render(request, 'main/cabinet.html', {'staff': staff_data})
-
 
 @login_required
 def patients(request):
@@ -444,7 +456,7 @@ def login_view(request):
 
             if user is not None:
                 login(request, user)
-                return redirect('cabinet')  # перенаправим в личный кабинет
+                return redirect('cabinet')  
             else:
                 error_message = "Неверный логин или пароль"
     else:
@@ -497,20 +509,17 @@ def patient_detail(request, patient_id):
                     messages.error(request, "Вы не привязаны к медперсоналу.")
                     return redirect('patient_detail', patient_id=patient_id)
 
-                # Проверяем: есть ли уже госпитализация
                 hospitalization = Hospitalization.objects.filter(
                     patient=patient
                 ).order_by('-hospitalization_startdate').first()
 
                 if hospitalization:
-                    # Обновляем существующую запись
                     hospitalization.hospitalization_room = form.cleaned_data['hospitalization_room']
                     hospitalization.hospitalization_startdate = form.cleaned_data['hospitalization_startdate']
                     hospitalization.hospitalization_enddate = form.cleaned_data['hospitalization_enddate']
                     hospitalization.medical_staff = staff
                     hospitalization.save()
                 else:
-                    # Создаём новую
                     new_hosp = form.save(commit=False)
                     new_hosp.patient = patient
                     new_hosp.medical_staff = staff
@@ -595,27 +604,21 @@ def patient_purpose(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)
     purposes = Purpose.objects.filter(hospitalization__patient=patient)
 
-    # Фильтруем только назначения для врача
     purposes_for_doctor = purposes.exclude(medical_staff__medical_staff_post__in=['Медсестра', 'Медбрат'])
-
-    # Получаем все медикаменты и процедуры
     medications = Medication.objects.all()
     procedures = Procedures.objects.all()
 
-    # Найдем активную госпитализацию
     hospitalization = Hospitalization.objects.filter(
         patient=patient,
         hospitalization_startdate__lte=date.today(),
         hospitalization_enddate__gte=date.today()
     ).first()
 
-    # Медперсонал
     try:
         medical_staff = MedicalStaff.objects.get(user=request.user)
     except MedicalStaff.DoesNotExist:
         medical_staff = None
 
-    # Обработка POST для создания нового назначения
     if request.method == 'POST':
         form = PurposeForm(request.POST)
         if form.is_valid():
@@ -628,7 +631,6 @@ def patient_purpose(request, patient_id):
     else:
         form = PurposeForm(initial={'purpose_startdate': date.today()})
 
-    # --- Словари выбора медикаментов/процедур для каждого назначения ---
     medications_selected = {
         p.purpose_id: list(
             IncludesReception.objects.filter(purpose=p).values_list("medication_id", flat=True)
@@ -645,7 +647,7 @@ def patient_purpose(request, patient_id):
     return render(request, 'main/patient_purpose.html', {
         'patient': patient,
         'form': form,
-        'purposes': purposes_for_doctor,  # Выводим только назначения для врачей
+        'purposes': purposes_for_doctor,  
         'medications': medications,
         'procedures': procedures,
         'medications_selected': medications_selected,
@@ -1051,16 +1053,13 @@ def active_procedures_view(request):
 
 @login_required
 def procedures_view(request):
-    staff = MedicalStaff.objects.get(user=request.user)  # Получаем текущего медицинского сотрудника
-
-    # Если пользователь является Главврачом, выводим все записи
+    staff = MedicalStaff.objects.get(user=request.user) 
+    
     if staff.medical_staff_post == 'Главврач':
-        procedures_executions = ProceduresExecution.objects.all()  # Все записи
+        procedures_executions = ProceduresExecution.objects.all() 
     else:
-        # Если пользователь не Главврач, выводим только его записи
         procedures_executions = ProceduresExecution.objects.filter(medical_staff_id=staff)
 
-    # Обработка формы добавления нового выполнения процедуры
     if request.method == 'POST':
         form = AddProcedureExecutionForm(request.POST)
         if form.is_valid():
@@ -1069,40 +1068,29 @@ def procedures_view(request):
             procedure_execution.procedures_execution_date = date.today()
             procedure_execution.save()
             messages.success(request, "Процедура успешно добавлена!")
-            return redirect('procedures')  # Перенаправление на страницу с процедурами
+            return redirect('procedures')  
     else:
         form = AddProcedureExecutionForm()
 
-    # Отображаем таблицу процедур и форму добавления новой
     return render(request, 'main/procedures.html', {
         'procedures_executions': procedures_executions,
         'form': form,
     })
 @login_required
 def medications_view(request):
-    staff = MedicalStaff.objects.get(user=request.user)  # Получаем текущего медицинского сотрудника
+    staff = MedicalStaff.objects.get(user=request.user) 
 
-    # Получаем активное назначение для текущего медицинского сотрудника
-    active_purpose = Purpose.objects.filter(
-        medical_staff=staff,
-        purpose_status='Активный'
-    ).first()  # Получаем первое активное назначение
-
-    # Если активное назначение существует, фильтруем медикаменты для этого назначения
-    if active_purpose:
-        medications = Medication.objects.filter(
-            id__in=IncludesReception.objects.filter(purpose=active_purpose).values('medication_id')
-        )
+    if staff.medical_staff_post == 'Главврач':
+        medication_dispensing_records = MedicationDispensing.objects.all()  
     else:
-        medications = Medication.objects.none()  # Если активного назначения нет, не показываем медикаменты
+        medication_dispensing_records = MedicationDispensing.objects.filter(medical_staff=staff)  
 
-    # Отображаем форму для добавления записи
     if request.method == 'POST':
         form = MedicationDispensingForm(request.POST)
         if form.is_valid():
             medication_dispensing = form.save(commit=False)
             medication_dispensing.medical_staff = staff
-            medication_dispensing.medication_dispensing_date = date.today()
+            medication_dispensing.medication_dispensing_date = date.today()  # Текущая дата
             medication_dispensing.save()
             messages.success(request, "Медикамент успешно выдан!")
             return redirect('medications')  # Перенаправление на страницу с медикаментами
@@ -1110,14 +1098,14 @@ def medications_view(request):
         form = MedicationDispensingForm()
 
     return render(request, 'main/medications.html', {
-        'medications': medications,
+        'medication_dispensing_records': medication_dispensing_records,  # Все или только свои записи
         'form': form,
     })
 
 
 @login_required
 def add_procedure_execution(request):
-    # Получаем список всех процедур для отображения в форме
+    
     procedures_list = Procedures.objects.all()
 
     if request.method == 'POST':
@@ -1151,12 +1139,13 @@ def add_procedure_execution(request):
     return render(request, 'procedures.html', {'procedures_list': procedures_list})
 @login_required
 def procedures_view(request):
-    staff = MedicalStaff.objects.get(user=request.user)  # Получаем текущего медицинского сотрудника
+    staff = MedicalStaff.objects.get(user=request.user)  
 
-    # Получаем все записи выполнения процедур для текущего сотрудника
-    procedures_executions = ProceduresExecution.objects.filter(medical_staff_id=staff)
+    if staff.medical_staff_post == 'Главврач':
+        procedures_executions = ProceduresExecution.objects.all() 
+    else:
+        procedures_executions = ProceduresExecution.objects.filter(medical_staff_id=staff)  
 
-    # Обработка формы добавления нового выполнения процедуры
     if request.method == 'POST':
         form = AddProcedureExecutionForm(request.POST)
         if form.is_valid():
@@ -1165,16 +1154,14 @@ def procedures_view(request):
             procedure_execution.procedures_execution_date = date.today()
             procedure_execution.save()
             messages.success(request, "Процедура успешно добавлена!")
-            return redirect('procedures')  # Перенаправление на страницу с процедурами
+            return redirect('procedures')  
     else:
         form = AddProcedureExecutionForm()
 
-    # Отображаем таблицу процедур и форму добавления новой
     return render(request, 'main/procedures.html', {
-        'procedures_executions': procedures_executions,
+        'procedures_executions': procedures_executions, 
         'form': form,
     })
-
 
 
 @login_required

@@ -164,8 +164,6 @@ function getCookie(name) {
     return cookieValue;
 }
 
-// static/JavaScript/patient.js
-
 function getSelectedPatientIds() {
     const checkboxes = document.querySelectorAll(".row-checkbox:checked");
     const ids = Array.from(checkboxes).map(cb => cb.closest("tr").dataset.id);
@@ -232,6 +230,60 @@ function updateSortIndicators(columnIndex) {
     });
 }
 
+function batchGenerateReport() {
+    const selectedPatientIds = getSelectedPatientIds();
+    if (selectedPatientIds.length === 0) {
+        alert("Выберите хотя бы одного пациента.");
+        return;
+    }
+
+    fetch("/generate_selected_patients_report/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie('csrftoken')
+        },
+        body: JSON.stringify({ ids: selectedPatientIds })
+    })
+    .then(response => response.blob())
+    .then(data => {
+        const blob = new Blob([data], { type: 'application/pdf' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'patients_report.pdf';
+        link.click();
+    })
+    .catch(error => {
+        alert("Ошибка при генерации отчета.");
+        console.error(error);
+    });
+}
 
 
+function batchPDF() {
+    const selectedPatientIds = getSelectedPatientIds();
+    if (selectedPatientIds.length === 0) {
+        alert("Выберите хотя бы одного пациента.");
+        return;
+    }
 
+    fetch("/generate_selected_patients_report/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie('csrftoken')
+        },
+        body: JSON.stringify({ ids: selectedPatientIds })
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'patients_report.pdf';
+        link.click();
+    })
+    .catch(error => {
+        alert("Произошла ошибка при создании отчета.");
+        console.error(error);
+    });
+}

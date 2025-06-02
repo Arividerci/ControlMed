@@ -202,7 +202,7 @@ class AddProcedureExecutionForm(forms.ModelForm):
         choices=STATUS_CHOICES,
         label="Статус",
         widget=forms.Select,
-        initial='В ожидании'  # Статус по умолчанию
+        initial='В ожидании'  
     )
 
     class Meta:
@@ -213,20 +213,22 @@ class AddProcedureExecutionForm(forms.ModelForm):
         }
 
 class MedicationDispensingForm(forms.ModelForm):
+    STATUS_CHOICES = [
+        ('В ожидании', 'В ожидании'),
+        ('Выполнено', 'Выполнено'),
+        ('Отменено', 'Отменено'),
+    ]
+    
+    medication_dispensing_status = forms.ChoiceField(
+        choices=STATUS_CHOICES,
+        label="Статус",
+        widget=forms.Select,
+        initial='В ожидании'  
+    )
+
     class Meta:
         model = MedicationDispensing
         fields = ['medication_id', 'medication_dispensing_dose', 'medication_dispensing_comment', 'medication_dispensing_status']
         widgets = {
             'medication_dispensing_date': forms.DateInput(attrs={'type': 'date', 'value': date.today()})
         }
-
-    def __init__(self, *args, **kwargs):
-        # Получаем активные медикаменты для назначения
-        active_purpose = kwargs.pop('active_purpose', None)
-        super(MedicationDispensingForm, self).__init__(*args, **kwargs)
-        
-        if active_purpose:
-            # Ограничиваем выбор только теми медикаментами, которые связаны с активным назначением
-            self.fields['medication_id'].queryset = Medication.objects.filter(
-                id__in=IncludesReception.objects.filter(purpose=active_purpose).values('medication_id')
-            )

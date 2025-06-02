@@ -20,7 +20,7 @@ class Hospitalization(models.Model):
     hospitalization_startdate = models.DateField()  
     hospitalization_room = models.SmallIntegerField()
     hospitalization_enddate = models.DateField()   
-    medical_staff = models.ForeignKey(MedicalStaff, on_delete=models.RESTRICT, db_column='medical_staff_id')
+    medical_staff = models.ForeignKey(MedicalStaff, on_delete=models.CASCADE, db_column='medical_staff_id')
     patient = models.ForeignKey('Patient',   on_delete=models.CASCADE, db_column='patient_id')
 
     class Meta:
@@ -74,8 +74,8 @@ class MedicalBook(models.Model):
         managed = False
 
 class MedicalBookContent(models.Model):
-    medical_book_content_id = models.AutoField(primary_key=True)  # имя как в БД
-    medicalbook_id = models.IntegerField()  # или ForeignKey, если хочешь
+    medical_book_content_id = models.AutoField(primary_key=True)  
+    medicalbook_id = models.IntegerField()  
     purpose = models.ForeignKey(Purpose, on_delete=models.RESTRICT, db_column='purpose_id')
     medical_book_content_notes = models.TextField(max_length=1500, null=True, blank=True)
 
@@ -88,7 +88,7 @@ class Medication(models.Model):
     medication_name = models.CharField(max_length=150)
     medication_dose = models.SmallIntegerField()
     def __str__(self):
-        return self.medication_name  # Выводим имя медикамента
+        return self.medication_name  
     class Meta:
         db_table = 'medication'
         managed = False
