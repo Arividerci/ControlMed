@@ -21,6 +21,7 @@
                     <div class="toggle-icon">≡</div>
                     <div class="sidebar-content">
                         <ul class="top-menu">
+    
                             {% if user.is_authenticated %}
                                 <li><a href="{% url 'cabinet' %}">Профиль</a></li>
                                 <li><a href="{% url 'patients' %}">Пациенты</a></li>

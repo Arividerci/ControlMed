@@ -170,3 +170,4 @@ class RegisterStep2Form(forms.ModelForm):
             'medical_staff_post',
             'medical_staff_specialisation',
         ]
+

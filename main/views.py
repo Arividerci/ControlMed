@@ -1,4 +1,4 @@
-from .models import Patient, MedicalStaff, MedicalBook, Hospitalization, Purpose, Medication, Procedures, IncludesReception, IncludesConducting, MedicalBookContent
+from .models import Patient, MedicalStaff, MedicalBook, Hospitalization, Purpose, Medication, Procedures, IncludesReception, IncludesConducting, MedicalBookContent, ProceduresExecution
 from .forms import RegisterStep1Form, RegisterStep2Form, LoginForm, AddPatientForm,  HospitalizationForm, PurposeForm
 from django.conf import settings
 from django.contrib import messages
@@ -10,9 +10,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseForbidden, JsonResponse
 from datetime import date, timedelta
 from django.views.decorators.http import require_POST
-from django.db.models import Count, Q
+from django.db.models import Count, Q,  F, ExpressionWrapper, DateField
 from django.db import transaction
-
 
 import os
 import json
@@ -40,17 +39,34 @@ def patients(request):
 
 
 @login_required
-def appointments_view(request):
+def assignments_view(request):
     staff = MedicalStaff.objects.get(user=request.user)
 
-    appointments = Purpose.objects.filter(
-        hospitalization__medical_staff=staff,
-        purpose_status__in=['Активный', 'Приостановлен']
+    # Фильтрация назначений для главврача или текущего медицинского персонала
+    assignments = Purpose.objects.filter(
+        purpose_status__in=['Активный', 'Приостановлен'] if staff.medical_staff_post != 'Главврач' else ['Активный', 'Приостановлен', 'Завершено'],
+        hospitalization__medical_staff=staff
     ).select_related('hospitalization', 'hospitalization__patient')
 
-    return render(request, 'main/appointments.html', {
-        'appointments': appointments
+    # Отладка: выводим количество назначений
+    print(f"Найдено назначений: {assignments.count()}")
+
+    # Для главврача нужно также загрузить медикаменты и процедуры
+    if staff.medical_staff_post == 'Главврач':
+        for assignment in assignments:
+            # Загружаем медикаменты
+            assignment.medications = IncludesReception.objects.filter(purpose=assignment).select_related('medication')
+            # Загружаем процедуры
+            assignment.procedures = IncludesConducting.objects.filter(purpose=assignment).select_related('procedures')
+
+            # Отладка: выводим количество медикаментов и процедур для каждого назначения
+            print(f"Назначение {assignment.purpose_id} имеет {assignment.medications.count()} медикаментов и {assignment.procedures.count()} процедур")
+
+    return render(request, 'main/assignments.html', {
+        'assignments': assignments,
+        'staff': staff,
     })
+
 
 @login_required
 def add_hospitalization(request, patient_id):
@@ -483,6 +499,7 @@ def delete_purpose_row(request, patient_id, purpose_id):
             return JsonResponse({'success': False, 'error': str(e)})
 
     return JsonResponse({'success': False, 'error': 'Invalid request'})
+
 @csrf_exempt
 @login_required
 def save_purpose_row(request, patient_id):
@@ -640,6 +657,7 @@ def save_purpose_row(request, patient_id):
 
     return JsonResponse({"success": False, "error": "Invalid request"})
 
+
 def patient_medbook(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)
     medicalbook = MedicalBook.objects.get(patient=patient)
@@ -684,39 +702,52 @@ def update_medical_book_comment(request, patient_id, content_id):
 
 
 @login_required
-def procedures_view(request):
-    # Логика для страницы процедур
-    return render(request, 'main/procedures.html')
-
-@login_required
 def medications_view(request):
     # Пока можно просто вернуть пустой шаблон или добавить свою логику
     return render(request, 'main/medications.html')
 
-from django.shortcuts import render
-from .models import Purpose, MedicalStaff
-from django.contrib.auth.decorators import login_required
-
 @login_required
 def assignments_view(request):
-    staff = MedicalStaff.objects.get(user=request.user)
+    staff = MedicalStaff.objects.get(user=request.user)  # Получаем текущего медицинского сотрудника
 
-    # Для главного врача — все назначения
+    # Получаем все назначения для главврача
     if staff.medical_staff_post == 'Главврач':
-        assignments = Purpose.objects.all().select_related('hospitalization', 'hospitalization__patient', 'hospitalization__medical_staff')
+        assignments = Purpose.objects.filter(
+            purpose_status__in=['Активный', 'Приостановлен', 'Завершено']
+        ).select_related('hospitalization', 'hospitalization__patient')
     else:
-        # Для остальных — только активные и приостановленные назначения, назначенные текущим медицинским персоналом
         assignments = Purpose.objects.filter(
             purpose_status__in=['Активный', 'Приостановлен'],
-            hospitalization__medical_staff=staff  # Фильтрация по лечащему врачу
-        ).select_related('hospitalization', 'hospitalization__patient', 'hospitalization__medical_staff')
+            hospitalization__medical_staff=staff
+        ).select_related('hospitalization', 'hospitalization__patient')
+
+    # Загружаем медикаменты и процедуры для каждого назначения
+    for assignment in assignments:
+        # Получаем медикаменты для назначения
+        assignment.medications = Medication.objects.filter(
+            medication_id__in=IncludesReception.objects.filter(purpose_id=assignment.purpose_id).values('medication_id')
+        )
+        
+        # Получаем процедуры для назначения
+        assignment.procedures = Procedures.objects.filter(
+            procedures_id__in=IncludesConducting.objects.filter(purpose_id=assignment.purpose_id).values('procedures_id')
+        )
+
+        # Получаем врача и помощника для каждого назначения
+        if staff.medical_staff_post == 'Главврач':
+            # Получаем имя и должность врача
+            assignment.doctor = MedicalStaff.objects.get(medical_staff_id=assignment.medical_staff_id)
+            
+            # Получаем медсестру или медбрата как помощника
+            assignment.assistant = MedicalStaff.objects.filter(
+                medical_staff_post__in=['Медсестра', 'Медбрат'],
+                user=assignment.medical_staff.user
+            ).first()
 
     return render(request, 'main/assignments.html', {
         'assignments': assignments,
         'staff': staff,
-        'active_page': 'purpose',
     })
-
 
 @login_required
 def hospitalizations_view(request):
@@ -733,7 +764,6 @@ def hospitalizations_view(request):
         'hospitalizations': hospitalizations,
         'staff': staff,
     })
-
 
 def export_assignments(request):
     # Создание ответа с типом контента для CSV
@@ -757,3 +787,37 @@ def export_assignments(request):
         ])
     
     return response
+
+@login_required
+def active_procedures_view(request):
+    staff = MedicalStaff.objects.get(user=request.user)
+
+    # Фильтруем только активные или приостановленные назначения для текущего сотрудника
+    assignments = Purpose.objects.filter(
+        purpose_status__in=['Активный', 'Приостановлен'],
+        hospitalization__medical_staff=staff
+    ).select_related('hospitalization', 'hospitalization__patient')
+
+    # Получаем все процедуры, связанные с назначениями через IncludesConducting
+    active_procedures = []
+    for assignment in assignments:
+        # Получаем связанные процедуры через IncludesConducting
+        procedures = IncludesConducting.objects.filter(purpose=assignment).select_related('procedures')
+
+        if procedures.exists():  # Проверяем, есть ли процедуры
+            for proc in procedures:
+                active_procedures.append({
+                    'assignment': assignment,
+                    'procedure': proc.procedures
+                })
+
+    return render(request, 'main/active_procedures.html', {
+        'active_procedures': active_procedures,
+    })
+
+
+@login_required
+def procedures_view(request):
+    # Логика для получения данных о процедурах
+    procedures = Procedures.objects.all()  # Получаем все процедуры, можно фильтровать по нужному критерию
+    return render(request, 'main/procedures.html', {'procedures': procedures})

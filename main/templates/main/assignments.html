@@ -1,6 +1,7 @@
 {% extends 'main/base.html' %}
 
 {% load static %}
+
 {% block title %}Задания{% endblock %}
 
 {% block extra_css %}
@@ -21,9 +22,7 @@
             <p>Вы видите только активные и приостановленные задания.</p>
         {% endif %}
 
-        {% if assignments %}
-        
-        <table>
+        <table class="table">
             <thead>
                 <tr>
                     <th>Пациент</th>
@@ -31,10 +30,12 @@
                     <th>Длительность</th>
                     <th>Статус</th>
                     <th>Диагноз</th>
-                    {% if staff.medical_staff_post == 'Главврач' %}
-                        <th>Работник</th>
-                        <th>ФИО Работника</th>
-                    {% endif %}
+                     {% if staff.medical_staff_post == 'Главврач' %}
+                        <th>Должность</th>
+                        <th>ФИО работника</th>
+                     {% endif %}
+                    <th>Медикаменты</th>
+                    <th>Процедуры</th>
                 </tr>
             </thead>
             <tbody>
@@ -45,58 +46,26 @@
                         <td>{{ assignment.purpose_duration }}</td>
                         <td>{{ assignment.purpose_status }}</td>
                         <td>{{ assignment.purpose_diagnosis }}</td>
+                        
                         {% if staff.medical_staff_post == 'Главврач' %}
-                            <td>
-                                {% if assignment.medical_staff %}
-                                    {{ assignment.medical_staff.medical_staff_post }}
-                                {% else %}
-                                    Не назначен
-                                {% endif %}
-                            </td>
-                            <td>{{ assignment.medical_staff.medical_staff_name }}</td>
+                            <td>{{ assignment.doctor.medical_staff_post }}</td>
+                            <td>{{ assignment.doctor.medical_staff_name }}</td>
                         {% endif %}
+                        
+                        <td>
+                            {% for medication in assignment.medications %}
+                                {{ medication.medication_name }} ({{ medication.medication_dose }} дозировка)<br>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% for procedure in assignment.procedures %}
+                                {{ procedure.procedures_name }} ({{ procedure.procedures_duration }} длительность)<br>
+                            {% endfor %}
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
-
-        <div class="export-button-container">
-            {% if staff.medical_staff_post == 'Главврач' %}
-                <form method="post" action="{% url 'export_assignments' %}">
-                    {% csrf_token %}
-                    <button type="submit" class="export-button">Экспортировать в CSV</button>
-                </form>
-            {% endif %}
-        </div>
-        {% else %}
-            <p>Заданий нет.</p>
-        {% endif %}
     </div>
 </div>
-
-<style>
-.export-button-container {
-    margin-top: 20px;
-    display: flex;
-    justify-content: center;
-}
-
-.export-button {
-    background-color: #d76b49;
-    border: none;
-    color: white;
-    font-weight: bold;
-    padding: 10px 20px;
-    border-radius: 30px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    width: 200px;
-    text-align: center;
-}
-
-.export-button:hover {
-    background-color: #ffffff;
-    color: #d76b49;
-}
-</style>
 {% endblock %}

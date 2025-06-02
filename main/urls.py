@@ -32,6 +32,8 @@ urlpatterns = [
     path('medications/', views.medications_view, name='medications'),
     path('assignments/export/', views.export_assignments, name='export_assignments'),
     path('patients/<int:patient_id>/hospitalization/', views.add_hospitalization, name='add_hospitalization'),
+    path('active_procedures/', views.active_procedures_view, name='active_procedures'),
 ]
+
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
