@@ -1,0 +1,68 @@
+{% extends 'main/base.html' %}
+{% block title %}Удалить{% endblock %}
+
+{% load static %}
+{% block extra_css %}
+<style>.save-button {
+    background-color: #d76b49;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 250px;
+    text-align: center;
+    display: inline-block;
+}
+
+.save-button:hover {
+    background-color: #ba5f3f;
+}
+
+.delete-button {
+    background-color: #ff7a52;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: inline-block;
+    margin-top: 20px;
+}
+
+.delete-button:hover {
+    background-color: #f05736;
+}
+
+.cancel-button {
+    margin-top: 20px;
+    color: #00626f;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.cancel-button:hover {
+    color: #d76b49;
+}
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="page-container-patient">
+
+    <h2>Вы уверены, что хотите удалить свой аккаунт?</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+        <button type="submit" class="delete-button">Удалить аккаунт</button>
+    </form>
+
+    <a href="{% url 'cabinet' %}" class="cancel-button">Отменить</a>
+
+</div>
+{% endblock %}

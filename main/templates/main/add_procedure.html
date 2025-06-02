@@ -1,0 +1,56 @@
+{% extends "main/base.html" %}
+
+{% block title %}Добавить выполненную процедуру{% endblock %}
+
+{% load static %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'CSS/add-procedure.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Добавить выполненную процедуру</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <!-- Выбор процедуры -->
+        <div class="form-group">
+            <label for="procedure_name">Выберите процедуру</label>
+            <select name="procedure_id" id="procedure_name" required>
+                {% for procedure in procedures_list %}
+                    <option value="{{ procedure.id }}">{{ procedure.procedures_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Длительность -->
+        <div class="form-group">
+            <label for="procedures_execution_duration">Длительность процедуры (часы)</label>
+            <input type="number" name="procedures_execution_duration" required step="0.1" class="form-control">
+        </div>
+
+        <!-- Комментарий -->
+        <div class="form-group">
+            <label for="procedures_execution_comment">Комментарий</label>
+            <textarea name="procedures_execution_comment" required class="form-control"></textarea>
+        </div>
+
+        <!-- Статус -->
+        <div class="form-group">
+            <label for="procedures_execution_status">Статус</label>
+            <select name="procedures_execution_status" required class="form-control">
+                <option value="В ожидании">В ожидании</option>
+                <option value="Выполнено">Выполнено</option>
+                <option value="Отменено">Отменено</option>
+            </select>
+        </div>
+
+        <!-- Кнопки -->
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <a href="{% url 'procedures_list' %}" class="btn btn-secondary">Назад к списку</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -55,6 +55,11 @@
         {% else %}
             <p>Госпитализаций нет.</p>
         {% endif %}
+         {% if staff.medical_staff_post == 'Главврач' %}
+            <div class="export-button-container">
+                <a href="{% url 'generate_hospitalization_report' %}" class="export-button">Создать отчет в PDF</a>
+            </div>
+        {% endif %}
     </div>
 </div>
 

@@ -33,6 +33,13 @@ urlpatterns = [
     path('assignments/export/', views.export_assignments, name='export_assignments'),
     path('patients/<int:patient_id>/hospitalization/', views.add_hospitalization, name='add_hospitalization'),
     path('active_procedures/', views.active_procedures_view, name='active_procedures'),
+    path('generate_report/', views.generate_report, name='generate_report'),
+    path('edit_profile/', views.edit_profile, name='edit_profile'),
+    path('delete_account/', views.delete_account, name='delete_account'),
+    path('generate_hospitalization_report/', views.generate_hospitalization_report, name='generate_hospitalization_report'),
+    path('save_procedure/', views.save_procedure, name='save_procedure'),
+    path('procedures_list/', views.procedures_view, name='procedures_list'),
+    path('add_procedure_execution/', views.add_procedure_execution, name='add_procedure_execution'),
 ]
 
 

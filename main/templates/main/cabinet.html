@@ -1,26 +1,60 @@
-{% extends "main/base.html" %}
+{% extends 'main/base.html' %}
 
 {% block title %}Личный кабинет{% endblock %}
 {% load static %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'CSS/cabinet.css' %}">
+<link rel="stylesheet" href="{% static 'CSS/patient_detail.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="cabinet-container">
-    <h2 class="cabinet-title">Личный кабинет</h2>
+<div id="section-main" class="patient-section">
+    <div class="patient-layout">
+        <!-- Убираем левый слайдбар, теперь он не нужен -->
 
-    {% if staff %}
-        <div class="cabinet-info">
-            <div class="cabinet-row"><span class="label">ФИО:</span><span>{{ staff.medical_staff_name }}</span></div>
-            <div class="cabinet-row"><span class="label">Дата рождения:</span><span>{{ staff.medical_staff_birthday }}</span></div>
-            <div class="cabinet-row"><span class="label">Пол:</span><span>{{ staff.medical_staff_gender }}</span></div>
-            <div class="cabinet-row"><span class="label">Должность:</span><span>{{ staff.medical_staff_post }}</span></div>
-            <div class="cabinet-row"><span class="label">Специализация:</span><span>{{ staff.medical_staff_specialisation }}</span></div>
+        <!-- Основная форма -->
+        <div class="patient-form">
+            <div class="header-row">
+                <h2>{{ staff.medical_staff_name }}</h2>
+            </div>
+            <div class="patient-identity">
+                <h3>Основная информация</h3>
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="staff_name">ФИО:</label>
+                            <input type="text" id="staff_name" name="staff_name" value="{{ staff.medical_staff_name }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="staff_post">Должность:</label>
+                            <input type="text" id="staff_post" name="staff_post" value="{{ staff.medical_staff_post }}" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="staff_specialisation">Специализация:</label>
+                            <input type="text" id="staff_specialisation" name="staff_specialisation" value="{{ staff.medical_staff_specialisation }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="staff_birthday">Дата рождения:</label>
+                            <input type="date" id="staff_birthday" name="staff_birthday" value="{{ staff.medical_staff_birthday|date:'Y-m-d' }}" required>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="save-button">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="account-actions">
+                <h4>Действия с аккаунтом</h4>
+                <p>Вы можете редактировать или удалить данные.</p>
+                <button type="button" class="delete-button" onclick="confirmDelete()">Удалить аккаунт</button>
+            </div>
         </div>
-    {% else %}
-        <p class="empty-message">Информация о сотруднике не найдена.</p>
-    {% endif %}
+    </div>
 </div>
 {% endblock %}

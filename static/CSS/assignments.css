@@ -100,3 +100,23 @@ td {
 td:first-child {
     font-weight: bold;
 }
+
+
+    .export-button-container {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .export-button {
+        background-color: #d76b49;
+        border: none;
+        color: white;
+        font-weight: bold;
+        padding: 12px 24px;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        width: 250px;
+        text-align: center;
+    }

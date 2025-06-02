@@ -1,5 +1,5 @@
 from .models import Patient, MedicalStaff, MedicalBook, Hospitalization, Purpose, Medication, Procedures, IncludesReception, IncludesConducting, MedicalBookContent, ProceduresExecution
-from .forms import RegisterStep1Form, RegisterStep2Form, LoginForm, AddPatientForm,  HospitalizationForm, PurposeForm, ProceduresExecutionForm
+from .forms import RegisterStep1Form, RegisterStep2Form, LoginForm, AddPatientForm,  HospitalizationForm, PurposeForm, ProceduresExecutionForm, EditProfileForm, AddProcedureExecutionForm
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -7,11 +7,19 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect,  get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponseForbidden, JsonResponse
+from django.http import HttpResponseForbidden, JsonResponse, HttpResponse
 from datetime import date, timedelta
 from django.views.decorators.http import require_POST
 from django.db.models import Count, Q,  F, ExpressionWrapper, DateField
 from django.db import transaction
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib import colors
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib import fonts
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfbase import pdfmetrics
+
 
 import os
 import json
@@ -38,6 +46,143 @@ def patients(request):
     return render(request, 'main/patients.html', {'patients': all_patients})
 
 
+@login_required
+def generate_report(request):
+    staff = MedicalStaff.objects.get(user=request.user)
+    
+    if staff.medical_staff_post != 'Главврач':
+        return HttpResponseForbidden("Доступ запрещен. Только главврач может создавать отчеты.")
+
+    assignments = Purpose.objects.all().select_related('hospitalization', 'hospitalization__patient', 'medical_staff')
+
+    # Создание PDF ответа
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="assignments_report.pdf"'
+
+    # Создание объекта canvas
+    p = canvas.Canvas(response, pagesize=letter)
+    width, height = letter
+
+    # Путь к TTF шрифту (убедитесь, что путь к файлу корректный)
+    font_path = os.path.join('static', 'fonts', 'Arial.ttf')
+    
+    if os.path.exists(font_path):
+        # Регистрируем шрифт с поддержкой кириллицы
+        pdfmetrics.registerFont(TTFont('Arial', font_path))
+        p.setFont('Arial', 12)
+    else:
+        # Если шрифт не найден, используем стандартный шрифт
+        p.setFont("Helvetica", 12)
+
+    # Заголовок отчета
+    p.setFont("Arial", 16)
+    p.drawString(100, height - 50, "Отчет по заданиям")
+
+    y_position = height - 80
+    for assignment in assignments:
+        # Формирование текста для каждой записи
+        patient_name = assignment.hospitalization.patient.patient_name
+        diagnosis = assignment.purpose_diagnosis
+        start_date = assignment.purpose_startdate
+        duration = assignment.purpose_duration
+        status = assignment.purpose_status
+        medical_staff = assignment.medical_staff  # Получаем медицинского работника по связи
+        doctor_name = medical_staff.medical_staff_name if medical_staff else "Неизвестен"
+        doctor_post = medical_staff.medical_staff_post if medical_staff else "Неизвестен"
+
+        # Вывод информации о назначении в виде текста
+        p.setFont("Arial", 10)
+        p.drawString(50, y_position, f"Пациент: {patient_name}")
+        y_position -= 15
+        p.drawString(50, y_position, f"Диагноз: {diagnosis}")
+        y_position -= 15
+        p.drawString(50, y_position, f"Дата лечения: {start_date}")
+        y_position -= 15
+        p.drawString(50, y_position, f"Продолжительность: {duration} дней")
+        y_position -= 15
+        p.drawString(50, y_position, f"Статус: {status}")
+        y_position -= 15
+        p.drawString(50, y_position, f"Назначение выполнял(а): {doctor_post} {doctor_name}")
+        y_position -= 20  # Отступ для следующей записи
+
+        # Добавляем новую страницу, если места не хватает
+        if y_position < 100:
+            p.showPage()
+            y_position = height - 100
+
+    # Завершаем создание PDF
+    p.showPage()
+    p.save()
+
+    return response
+
+
+@login_required
+def generate_hospitalization_report(request):
+    staff = MedicalStaff.objects.get(user=request.user)
+    
+    if staff.medical_staff_post != 'Главврач':
+        return HttpResponseForbidden("Доступ запрещен. Только главврач может создавать отчеты.")
+
+    hospitalizations = Hospitalization.objects.all().select_related('patient', 'medical_staff')
+
+    # Создание PDF ответа
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="hospitalization_report.pdf"'
+
+    # Создание объекта canvas
+    p = canvas.Canvas(response, pagesize=letter)
+    width, height = letter
+
+    # Путь к TTF шрифту (убедитесь, что путь к файлу корректный)
+    font_path = os.path.join('static', 'fonts', 'Arial.ttf')
+    
+    if os.path.exists(font_path):
+        # Регистрируем шрифт с поддержкой кириллицы
+        pdfmetrics.registerFont(TTFont('Arial', font_path))
+        p.setFont('Arial', 12)
+    else:
+        # Если шрифт не найден, используем стандартный шрифт
+        p.setFont("Helvetica", 12)
+
+    # Заголовок отчета
+    p.setFont("Arial", 16)
+    p.drawString(100, height - 50, "Отчет по госпитализациям")
+
+    y_position = height - 80
+    for hospitalization in hospitalizations:
+        # Формирование текста для каждой записи
+        patient_name = hospitalization.patient.patient_name
+        start_date = hospitalization.hospitalization_startdate
+        end_date = hospitalization.hospitalization_enddate
+        room = hospitalization.hospitalization_room
+        medical_staff = hospitalization.medical_staff  # Получаем медицинского работника по связи
+        staff_name = medical_staff.medical_staff_name if medical_staff else "Неизвестен"
+        staff_post = medical_staff.medical_staff_post if medical_staff else "Неизвестен"
+
+        # Вывод информации о госпитализации в виде текста
+        p.setFont("Arial", 10)
+        p.drawString(50, y_position, f"Пациент: {patient_name}")
+        y_position -= 15
+        p.drawString(50, y_position, f"Дата начала: {start_date}")
+        y_position -= 15
+        p.drawString(50, y_position, f"Дата окончания: {end_date}")
+        y_position -= 15
+        p.drawString(50, y_position, f"Палата: {room}")
+        y_position -= 15
+        p.drawString(50, y_position, f"Госпитализацию провел(а) ФИО: {staff_post} {staff_name}")
+        y_position -= 20  # Отступ для следующей записи
+
+        # Добавляем новую страницу, если места не хватает
+        if y_position < 100:
+            p.showPage()
+            y_position = height - 100
+
+    # Завершаем создание PDF
+    p.showPage()
+    p.save()
+
+    return response
 @login_required
 def assignments_view(request):
     staff = MedicalStaff.objects.get(user=request.user)
@@ -67,6 +212,33 @@ def assignments_view(request):
         'staff': staff,
     })
 
+
+# Представление для редактирования профиля
+@login_required
+def edit_profile(request):
+    staff = MedicalStaff.objects.get(user=request.user)
+
+    if request.method == 'POST':
+        form = EditProfileForm(request.POST, instance=staff)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Информация успешно обновлена.')
+            return redirect('cabinet')  # Перенаправление в кабинет после успешного сохранения
+    else:
+        form = EditProfileForm(instance=staff)
+
+    return render(request, 'main/edit_profile.html', {'form': form})
+
+# Представление для удаления аккаунта
+@login_required
+def delete_account(request):
+    staff = MedicalStaff.objects.get(user=request.user)
+    if request.method == 'POST':
+        staff.delete()
+        messages.success(request, 'Аккаунт успешно удален.')
+        return redirect('login')  # После удаления перенаправить на страницу логина
+
+    return render(request, 'main/delete_account.html')
 
 @login_required
 def add_hospitalization(request, patient_id):
@@ -908,89 +1080,66 @@ def active_procedures(request):
         'form': form,
     })
 
-
-
 @login_required
-def add_procedure(request):
+def add_procedure_execution(request):
+    # Получаем список всех процедур для отображения в форме
+    procedures_list = Procedures.objects.all()
+
     if request.method == 'POST':
-        procedures_id = request.POST.get('procedures_id')  # Используем 'procedures_id'
+        procedure_id = request.POST.get('procedure_id')
         duration = request.POST.get('procedures_execution_duration')
         comment = request.POST.get('procedures_execution_comment')
         status = request.POST.get('procedures_execution_status')
 
-        medical_staff = MedicalStaff.objects.get(user=request.user)  # Получаем текущего медработника
+        try:
+            procedure = Procedures.objects.get(id=procedure_id)  # Получаем процедуру по ID
+        except Procedures.DoesNotExist:
+            messages.error(request, "Процедура не найдена!")
+            return redirect('add_procedure_execution')
 
-        # Создаем запись в таблице procedures_execution
-        ProceduresExecution.objects.create(
-            procedures_id=procedures_id,  # Используем правильное имя поля 'procedures_id'
-            medical_staff_id=medical_staff,  # Передаем объект staff
-            procedures_execution_date=date.today(),
-            procedures_execution_duration=duration,
-            procedures_execution_comment=comment,
-            procedures_execution_status=status
-        )
+        # Создаем запись в ProceduresExecution
+        try:
+            ProceduresExecution.objects.create(
+                procedures_execution_date=date.today(),
+                procedures_execution_comment=comment,
+                medical_staff_id=request.user.medical_staff_id,  # Текущий пользователь
+                procedures_id=procedure,  # Процедура, которую выбрал пользователь
+                procedures_execution_status=status,
+                procedures_execution_duration=duration
+            )
+            messages.success(request, "Процедура успешно добавлена!")
+            return redirect('procedures_list')  # Перенаправление на список процедур
+        except Exception as e:
+            messages.error(request, f"Ошибка при добавлении процедуры: {str(e)}")
+            return redirect('add_procedure_execution')
 
-        return redirect('procedures')  # Перенаправляем на страницу процедур (можно изменить на нужный путь)
-
-    # Если запрос GET, то просто отображаем форму
-    procedures_list = Procedures.objects.all()  # Получаем все процедуры
-    return render(request, 'main/procedures.html', {'procedures_list': procedures_list})
-
+    return render(request, 'procedures.html', {'procedures_list': procedures_list})
 @login_required
 def procedures_view(request):
     staff = MedicalStaff.objects.get(user=request.user)  # Получаем текущего медицинского сотрудника
-    today = date.today()  # Получаем сегодняшнюю дату
 
-    # Получаем все назначения для текущего сотрудника
-    assignments = []
+    # Получаем все записи выполнения процедур для текущего сотрудника
+    procedures_executions = ProceduresExecution.objects.filter(medical_staff_id=staff)
 
-    # Для сотрудников (не для главврача), у которых дата начала <= сегодняшняя дата <= дата окончания
-    if staff.medical_staff_post != 'Главврач':
-        assignments = Purpose.objects.filter(
-            purpose_status__in=['Активный', 'Приостановлен'],
-            hospitalization__medical_staff=staff,  # Привязка к медицинскому сотруднику
-            purpose_startdate__lte=today,  # Начало назначения раньше или равно сегодняшней дате
-        ).select_related('hospitalization', 'hospitalization__patient').distinct('hospitalization')
+    # Обработка формы добавления нового выполнения процедуры
+    if request.method == 'POST':
+        form = AddProcedureExecutionForm(request.POST)
+        if form.is_valid():
+            procedure_execution = form.save(commit=False)
+            procedure_execution.medical_staff_id = staff
+            procedure_execution.procedures_execution_date = date.today()
+            procedure_execution.save()
+            messages.success(request, "Процедура успешно добавлена!")
+            return redirect('procedures')  # Перенаправление на страницу с процедурами
+    else:
+        form = AddProcedureExecutionForm()
 
-        # Загружаем процедуры для каждого назначения
-        procedures_ids = []
-        for assignment in assignments:
-            # Проверяем, попадает ли сегодняшняя дата в промежуток от начала до конца
-            end_date = assignment.purpose_startdate + timedelta(days=assignment.purpose_duration)
-            if assignment.purpose_startdate <= today <= end_date:
-                # Получаем процедуры для назначения
-                procedures_ids.extend(
-                    IncludesConducting.objects.filter(purpose_id=assignment.purpose_id).values_list('procedures_id', flat=True)
-                )
-
-        # Получаем все процедуры, которые привязаны к назначениям текущего сотрудника
-        procedures_list = Procedures.objects.filter(procedures_id__in=procedures_ids)
-
-    # Для главврача загружаем все назначения, но с фильтрацией по дате начала и окончания
-    elif staff.medical_staff_post == 'Главврач':
-        assignments = Purpose.objects.filter(
-            purpose_status__in=['Активный', 'Приостановлен', 'Завершено'],
-            purpose_startdate__lte=today,  # Начало назначения раньше или равно сегодняшней дате
-        ).select_related('hospitalization', 'hospitalization__patient')
-
-        # Загружаем процедуры для каждого назначения
-        procedures_ids = []
-        for assignment in assignments:
-            # Проверяем, попадает ли сегодняшняя дата в промежуток от начала до конца
-            end_date = assignment.purpose_startdate + timedelta(days=assignment.purpose_duration)
-            if assignment.purpose_startdate <= today <= end_date:
-                # Получаем процедуры для назначения
-                procedures_ids.extend(
-                    IncludesConducting.objects.filter(purpose_id=assignment.purpose_id).values_list('procedures_id', flat=True)
-                )
-
-        # Получаем все процедуры
-        procedures_list = Procedures.objects.filter(procedures_id__in=procedures_ids)
-
-    # Отображаем страницу с процедурами
+    # Отображаем таблицу процедур и форму добавления новой
     return render(request, 'main/procedures.html', {
-        'procedures_list': procedures_list,
+        'procedures_executions': procedures_executions,
+        'form': form,
     })
+
 
 
 @login_required
@@ -1020,3 +1169,28 @@ def add_medication_dispensing(request):
         'form': form,
         'active_medications': active_medications,
     })
+
+def save_procedure(request):
+    # Проверка метода запроса
+    if request.method == 'POST':
+        form = ProceduresExecutionForm(request.POST)
+        
+        # Проверка валидности формы
+        if form.is_valid():
+            # Сохраняем данные в базе данных
+            procedure_execution = form.save(commit=False)
+            
+            # Дополнительно можно установить данные по текущему пользователю, если нужно
+            # procedure_execution.medical_staff_id = request.user.medical_staff_id
+            
+            # Сохраняем запись
+            procedure_execution.save()
+            
+            messages.success(request, 'Процедура успешно сохранена!')
+            return redirect('procedures_list')  # Перенаправление на список процедур
+        else:
+            messages.error(request, 'Пожалуйста, исправьте ошибки в форме.')
+    else:
+        form = ProceduresExecutionForm()
+
+    return render(request, 'main/procedure_form.html', {'form': form})

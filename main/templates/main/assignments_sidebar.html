@@ -1,6 +1,8 @@
 <div class="patient-sidebar">
     <a href="{% url 'hospitalizations' %}" class="patient-sidebar-item {% if active_page == 'hospitalization' %}active{% endif %}">Госпитализация</a>
     <a href="{% url 'assignments' %}" class="patient-sidebar-item {% if active_page == 'purpose' %}active{% endif %}">Назначения</a>
+
     <a href="{% url 'procedures' %}" class="patient-sidebar-item {% if active_page == 'procedures' %}active{% endif %}">Процедуры</a>
     <a href="{% url 'medications' %}" class="patient-sidebar-item {% if active_page == 'medications' %}active{% endif %}">Медикаменты</a>
+
 </div>

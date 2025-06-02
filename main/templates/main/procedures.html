@@ -1,71 +1,37 @@
-{% extends 'main/base.html' %}
-
-{% load static %}
-{% block title %}Мои процедуры{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'CSS/patient_detail.css' %}">
-<link rel="stylesheet" href="{% static 'CSS/assignments.css' %}">
-{% endblock %}
+{% extends "main/base.html" %}
+{% block title %}Процедуры{% endblock %}
 
 {% block content %}
-<div class="patient-layout">
-    {% include 'main/assignments_sidebar.html' %}
+    <h2>Записи выполнения процедур</h2>
 
-    <h1>Активные процедуры</h1>
-
-    <!-- Кнопка для добавления новой процедуры -->
-    <button id="add-procedure-btn" class="btn btn-primary">Добавить выполненную процедуру</button>
-
-    <!-- Модальная форма или карточка для ввода процедуры -->
-    <div id="procedure-form" style="display: none;">
-        <h3>Добавление выполненной процедуры</h3>
-        <!-- HTML шаблон -->
-        <form method="POST">
-            {% csrf_token %}
-
-            <label for="procedure">Выберите процедуру:</label>
-            <select name="procedure_id" id="procedure" class="form-control">
-                {% for procedure in procedures_list %}
-                    <option value="{{ procedure.id }}">{{ procedure.procedures_name }}</option>
-                {% endfor %}
-            </select>
-
-            
-            <label for="procedures_execution_duration">Длительность процедуры:</label>
-            <input type="number" name="procedures_execution_duration" class="form-control" step="0.1" required>
-
-            <label for="procedures_execution_comment">Комментарий:</label>
-            <textarea name="procedures_execution_comment" class="form-control" required></textarea>
-
-            <label for="procedures_execution_status">Статус:</label>
-            <select name="procedures_execution_status" class="form-control">
-                <option value="В ожидании">В ожидании</option>
-                <option value="Выполнено">Выполнено</option>
-                <option value="Отменено">Отменено</option>
-            </select>
-
-            <button type="submit" class="btn btn-success">Сохранить</button>
-        </form>
-    </div>
-
-    <h3>Активные процедуры:</h3>
-    {% if procedures_list %}
-        <ul>
-            {% for procedure in procedures_list %}
-                <li>{{ procedure.procedures_name }} - {{ procedure.procedures_execution_date }}</li>
+    <!-- Таблица с записями выполнения процедур -->
+    <table>
+        <thead>
+            <tr>
+                <th>Процедура</th>
+                <th>Дата выполнения</th>
+                <th>Статус</th>
+                <th>Продолжительность</th>
+                <th>Комментарий</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for procedure_execution in procedures_executions %}
+                <tr>
+                    <td>{{ procedure_execution.procedures_id.procedures_name }}</td>
+                    <td>{{ procedure_execution.procedures_execution_date }}</td>
+                    <td>{{ procedure_execution.procedures_execution_status }}</td>
+                    <td>{{ procedure_execution.procedures_execution_duration }}</td>
+                    <td>{{ procedure_execution.procedures_execution_comment }}</td>
+                </tr>
             {% endfor %}
-        </ul>
-    {% else %}
-        <p>Нет активных процедур.</p>
-    {% endif %}
-</div>
+        </tbody>
+    </table>
 
-<script>
-    // JavaScript для открытия формы при нажатии кнопки
-    document.getElementById('add-procedure-btn').addEventListener('click', function() {
-        document.getElementById('procedure-form').style.display = 'block';
-    });
-</script>
-
+    <h3>Добавить выполнение процедуры</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Добавить выполнение процедуры</button>
+    </form>
 {% endblock %}

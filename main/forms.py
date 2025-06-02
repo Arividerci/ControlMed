@@ -175,10 +175,7 @@ class RegisterStep2Form(forms.ModelForm):
 class ProceduresExecutionForm(forms.ModelForm):
     class Meta:
         model = ProceduresExecution
-        fields = ['procedures_id', 'procedures_execution_duration', 'procedures_execution_comment', 'procedures_execution_status']
-        widgets = {
-            'procedures_execution_date': forms.DateInput(attrs={'type': 'date', 'value': date.today()})
-        }
+        fields = ['procedures_id', 'procedures_execution_date', 'procedures_execution_duration', 'procedures_execution_comment', 'procedures_execution_status']
 
 class MedicationDispensingForm(forms.ModelForm):
     class Meta:
@@ -186,4 +183,18 @@ class MedicationDispensingForm(forms.ModelForm):
         fields = ['medication_id', 'medication_dispensing_dose', 'medication_dispensing_comment', 'medication_dispensing_status']
         widgets = {
             'medication_dispensing_date': forms.DateInput(attrs={'type': 'date', 'value': date.today()})
+        }
+
+
+class EditProfileForm(forms.ModelForm):
+    class Meta:
+        model = MedicalStaff
+        fields = ['medical_staff_name', 'medical_staff_birthday', 'medical_staff_gender', 'medical_staff_post', 'medical_staff_specialisation']
+
+class AddProcedureExecutionForm(forms.ModelForm):
+    class Meta:
+        model = ProceduresExecution
+        fields = ['procedures_id', 'procedures_execution_duration', 'procedures_execution_comment', 'procedures_execution_status']
+        widgets = {
+            'procedures_execution_date': forms.DateInput(attrs={'type': 'date', 'value': date.today()})
         }
