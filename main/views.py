@@ -364,14 +364,14 @@ def patient_detail(request, patient_id):
     ).first()
 
     return render(request, 'main/patient_detail.html', {
-    'patient': patient,
-    'hospitalization': hospitalization,
-    'medical_book': medical_book,
-    'form': HospitalizationForm(),
-    'purpose_form': PurposeForm(),
-    'active_tab': active_tab,
-    'hospitalizations': Hospitalization.objects.filter(patient=patient),
-    'medical_staff': MedicalStaff.objects.all(),
+        'patient': patient,
+        'hospitalization': hospitalization,
+        'medical_book': medical_book,
+        'form': HospitalizationForm(),
+        'purpose_form': PurposeForm(),
+        'active_tab': active_tab,
+        'hospitalizations': Hospitalization.objects.filter(patient=patient),
+        'medical_staff': MedicalStaff.objects.all(),
     
 })
 @login_required
@@ -658,6 +658,7 @@ def save_purpose_row(request, patient_id):
     return JsonResponse({"success": False, "error": "Invalid request"})
 
 
+
 def patient_medbook(request, patient_id):
     patient = get_object_or_404(Patient, pk=patient_id)
     medicalbook = MedicalBook.objects.get(patient=patient)
@@ -788,6 +789,7 @@ def assignments_view(request):
         'staff': staff,
     })
 
+
 @login_required
 def hospitalizations_view(request):
     staff = MedicalStaff.objects.get(user=request.user)
@@ -829,38 +831,50 @@ def export_assignments(request):
 
 @login_required
 def active_procedures_view(request):
-    staff = MedicalStaff.objects.get(user=request.user)
+    # Получаем активные назначения для текущего пользователя
+    medical_staff = MedicalStaff.objects.get(user=request.user)
+    active_purposes = Purpose.objects.filter(
+        medical_staff=medical_staff,
+        purpose_status="Активный",
+        purpose_startdate__lte=date.today(),
+        purpose_startdate__gte=date.today() - timedelta(days=1)
+    )
 
-    # Фильтруем только активные или приостановленные назначения для текущего сотрудника
-    assignments = Purpose.objects.filter(
-        purpose_status__in=['Активный', 'Приостановлен'],
-        hospitalization__medical_staff=staff
-    ).select_related('hospitalization', 'hospitalization__patient')
-
-    # Получаем все процедуры, связанные с назначениями через IncludesConducting
     active_procedures = []
-    for assignment in assignments:
-        # Получаем связанные процедуры через IncludesConducting
-        procedures = IncludesConducting.objects.filter(purpose=assignment).select_related('procedures')
+    
+    # Получаем связанные с ними процедуры
+    for purpose in active_purposes:
+        procedures = IncludesConducting.objects.filter(purpose=purpose)
+        for procedure in procedures:
+            active_procedures.append(procedure.procedures)
 
-        if procedures.exists():  # Проверяем, есть ли процедуры
-            for proc in procedures:
-                active_procedures.append({
-                    'assignment': assignment,
-                    'procedure': proc.procedures
-                })
-
-    return render(request, 'main/active_procedures.html', {
-        'active_procedures': active_procedures,
+    return render(request, 'main/procedures.html', {
+        'active_procedures': active_procedures
     })
+
 
 
 @login_required
 def procedures_view(request):
-    # Логика для получения данных о процедурах
-    procedures = Procedures.objects.all()  # Получаем все процедуры, можно фильтровать по нужному критерию
-    return render(request, 'main/procedures.html', {'procedures': procedures})
+    staff = MedicalStaff.objects.get(user=request.user)  # Получаем текущего медицинского сотрудника
 
+    # Получаем активные назначения данного сотрудника
+    active_procedures = Purpose.objects.filter(
+        purpose_status__in=['Активный', 'Приостановлен'],
+        hospitalization__medical_staff=staff
+    ).select_related('hospitalization', 'hospitalization__patient')
+
+    procedures_list = []
+
+    # Извлекаем процедуры для каждого назначения
+    for purpose in active_procedures:
+        procedures = Procedures.objects.filter(
+            procedures_id__in=IncludesConducting.objects.filter(purpose_id=purpose.purpose_id).values('procedures_id')
+        )
+        procedures_list.extend(procedures)  # Добавляем все процедуры в список
+
+    # Отправляем список процедур в шаблон
+    return render(request, 'main/procedures.html', {'procedures_list': procedures_list})
 
 @login_required
 def active_procedures(request):
@@ -892,4 +906,85 @@ def active_procedures(request):
     return render(request, 'main/procedures.html', {
         'active_procedures': active_procedures,
         'form': form,
+    })
+
+
+@login_required
+def add_procedure_execution(request):
+    staff = MedicalStaff.objects.get(user=request.user)
+    
+    # Получаем все активные процедуры
+    active_procedures = Procedures.objects.filter(
+        purpose__purpose_status__in=['Активный', 'Приостановлен'],
+        purpose__purpose_startdate__lte=date.today(),  # Начало назначения до сегодняшнего дня
+        purpose__purpose_enddate__gte=date.today()  # Конец назначения после сегодняшнего дня
+    )
+
+    if request.method == 'POST':
+        form = ProceduresExecutionForm(request.POST)
+        if form.is_valid():
+            procedure_execution = form.save(commit=False)
+            procedure_execution.medical_staff = staff  # Текущий медицинский сотрудник
+            procedure_execution.procedures_execution_date = date.today()  # Текущая дата
+            procedure_execution.save()
+            return redirect('procedures_list')  # Перенаправляем на список процедур
+
+    else:
+        form = ProceduresExecutionForm()
+
+    return render(request, 'main/procedures_execution_form.html', {
+        'form': form,
+        'active_procedures': active_procedures,
+    })
+
+@login_required
+def add_procedure_view(request):
+    # Получаем активные назначения для пользователя
+    medical_staff = MedicalStaff.objects.get(user=request.user)
+
+    # Находим все активные назначения с процедурами, которые связаны с медицинским работником
+    active_procedures = Purpose.objects.filter(
+        medical_staff=medical_staff,
+        purpose_status="Активный"
+    ).prefetch_related('procedures')
+
+    procedures_list = []
+    for purpose in active_procedures:
+        for procedure in purpose.procedures.all():  # Получаем все процедуры из назначения
+            procedures_list.append(procedure)
+
+    # Формируем форму
+    form = ProceduresExecutionForm()
+    return render(request, 'main/procedures.html', {
+        'form': form,
+        'procedures_list': procedures_list
+    })
+
+
+@login_required
+def add_medication_dispensing(request):
+    staff = MedicalStaff.objects.get(user=request.user)
+    
+    # Получаем все активные медикаменты
+    active_medications = Medication.objects.filter(
+        purpose__purpose_status__in=['Активный', 'Приостановлен'],
+        purpose__purpose_startdate__lte=date.today(),  # Начало назначения до сегодняшнего дня
+        purpose__purpose_enddate__gte=date.today()  # Конец назначения после сегодняшнего дня
+    )
+
+    if request.method == 'POST':
+        form = MedicationDispensingForm(request.POST)
+        if form.is_valid():
+            medication_dispensing = form.save(commit=False)
+            medication_dispensing.medical_staff = staff  # Текущий медицинский сотрудник
+            medication_dispensing.medication_dispensing_date = date.today()  # Текущая дата
+            medication_dispensing.save()
+            return redirect('medications_list')  # Перенаправляем на список медикаментов
+
+    else:
+        form = MedicationDispensingForm()
+
+    return render(request, 'main/medication_dispensing_form.html', {
+        'form': form,
+        'active_medications': active_medications,
     })

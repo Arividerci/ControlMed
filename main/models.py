@@ -142,21 +142,27 @@ class IncludesConducting(models.Model):
         managed = False
         unique_together = (('procedures', 'purpose'),)
 
+
 class ProceduresExecution(models.Model):
-    procedures_execution_id = models.AutoField(primary_key=True)
-    procedures = models.ForeignKey(Procedures, on_delete=models.RESTRICT, db_column='procedures_id')
-    medical_staff = models.ForeignKey('MedicalStaff', on_delete=models.RESTRICT, db_column='medical_staff_id')
-    procedures_execution_date = models.DateField(verbose_name="Дата выполнения процедуры")
-    procedures_execution_duration = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name="Продолжительность")
-    procedures_execution_status = models.CharField(max_length=20, verbose_name="Статус выполнения процедуры")
-    procedures_execution_comment = models.TextField(null=True, blank=True, verbose_name="Комментарий")
+    procedures_execution_id = models.AutoField(primary_key=True)  # Уникальный идентификатор для выполнения процедуры
+    procedures_id = models.ForeignKey('Procedures', on_delete=models.RESTRICT, db_column='procedures_id')  # Внешний ключ на модель Procedures
+    medical_staff_id = models.ForeignKey('MedicalStaff', on_delete=models.RESTRICT, db_column='medical_staff_id')  # Внешний ключ на модель MedicalStaff (врач, медсестра и т. д.)
+    procedures_execution_date = models.DateField(default=date.today)  # Дата выполнения процедуры
+    procedures_execution_duration = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)  # Продолжительность выполнения процедуры
+    procedures_execution_status = models.CharField(max_length=20, default='В ожидании')  # Статус выполнения процедуры
+    procedures_execution_comment = models.TextField(null=True, blank=True)  # Комментарий к выполнению
 
     def __str__(self):
-        return f"{self.procedures} - {self.medical_staff} - {self.procedures_execution_status}"
+        return f"Процедура {self.procedures_id.procedures_name} ({self.procedures_execution_status})"
 
-    class Meta:
-        db_table = 'procedures_execution'
-        managed = False
-        unique_together = (('procedures', 'medical_staff'),)
-        verbose_name = "Выполнение процедуры"
-        verbose_name_plural = "Выполнения процедур"
+class MedicationDispensing(models.Model):
+    medication_dispensing_id = models.AutoField(primary_key=True)
+    medication_id = models.ForeignKey('Medication', on_delete=models.RESTRICT, db_column='medication_id')  # Внешний ключ на модель Medication
+    medical_staff_id = models.ForeignKey('MedicalStaff', on_delete=models.RESTRICT, db_column='medical_staff_id')  # Внешний ключ на модель MedicalStaff
+    medication_dispensing_date = models.DateField(default=date.today)  # Дата выдачи медикамента
+    medication_dispensing_dose = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)  # Доза медикамента
+    medication_dispensing_status = models.CharField(max_length=20, default='В ожидании')  # Статус выдачи
+    medication_dispensing_comment = models.TextField(null=True, blank=True)  # Комментарий к выдаче
+
+    def __str__(self):
+        return f"Выдача {self.medication.medication_name} ({self.medication_dispensing_status})"
