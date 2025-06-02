@@ -1,37 +1,126 @@
-{% extends "main/base.html" %}
-{% block title %}Процедуры{% endblock %}
+{% extends 'main/base.html' %}
+
+{% load static %}
+
+{% block title %}Записи выполнения процедур{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'CSS/patient_detail.css' %}">
+    <link rel="stylesheet" href="{% static 'CSS/assignments.css' %}">
+    <style>
+        .add-procedure-form {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            margin-top: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .form-group select,
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #dfe6ed;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .submit-button {
+            background-color: #d76b49;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+        }
+
+        .submit-button:hover {
+            background-color: #ec7653;
+        }
+    </style>
+{% endblock %}
 
 {% block content %}
-    <h2>Записи выполнения процедур</h2>
+<div class="patient-layout">
+    {% include 'main/assignments_sidebar.html' %}
 
-    <!-- Таблица с записями выполнения процедур -->
-    <table>
-        <thead>
-            <tr>
-                <th>Процедура</th>
-                <th>Дата выполнения</th>
-                <th>Статус</th>
-                <th>Продолжительность</th>
-                <th>Комментарий</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for procedure_execution in procedures_executions %}
+    <div class="patient-content">
+        <h2>Записи выполнения процедур</h2>
+
+        <!-- Таблица с записями выполнения процедур -->
+        <table class="procedures-table">
+            <thead>
                 <tr>
-                    <td>{{ procedure_execution.procedures_id.procedures_name }}</td>
-                    <td>{{ procedure_execution.procedures_execution_date }}</td>
-                    <td>{{ procedure_execution.procedures_execution_status }}</td>
-                    <td>{{ procedure_execution.procedures_execution_duration }}</td>
-                    <td>{{ procedure_execution.procedures_execution_comment }}</td>
+                    <th>Процедура</th>
+                    <th>Дата выполнения</th>
+                    <th>Статус</th>
+                    <th>Продолжительность</th>
+                    <th>Комментарий</th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                {% for procedure_execution in procedures_executions %}
+                    <tr>
+                        <td>{{ procedure_execution.procedures_id.procedures_name }}</td>
+                        <td>{{ procedure_execution.procedures_execution_date }}</td>
+                        <td>{{ procedure_execution.procedures_execution_status }}</td>
+                        <td>{{ procedure_execution.procedures_execution_duration }}</td>
+                        <td>{{ procedure_execution.procedures_execution_comment }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
 
-    <h3>Добавить выполнение процедуры</h3>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Добавить выполнение процедуры</button>
-    </form>
+        <h3>Добавить выполнение процедуры</h3>
+
+        <!-- Форма для добавления новой процедуры -->
+        <form method="post" class="add-procedure-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_procedures_id">Процедура:</label>
+                {{ form.procedures_id }}
+            </div>
+
+            <div class="form-group">
+                <label for="id_procedures_execution_duration">Продолжительность:</label>
+                {{ form.procedures_execution_duration }}
+            </div>
+
+            <div class="form-group">
+                <label for="id_procedures_execution_comment">Комментарий:</label>
+                {{ form.procedures_execution_comment }}
+            </div>
+
+            <div class="form-group">
+                <label for="id_procedures_execution_status">Статус:</label>
+                {{ form.procedures_execution_status }}
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="submit-button">Добавить выполнение процедуры</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

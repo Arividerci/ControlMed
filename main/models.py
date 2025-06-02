@@ -110,6 +110,9 @@ class Procedures(models.Model):
     procedures_name = models.CharField(max_length=100)
     procedures_duration = models.DecimalField(max_digits=4, decimal_places=2)
 
+    def __str__(self):
+        return self.procedures_name  # Возвращаем имя процедуры
+    
     class Meta:
         db_table = 'procedures'
         managed = False
@@ -167,7 +170,7 @@ class MedicationDispensing(models.Model):
     medication_dispensing_dose = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)  # Доза медикамента
     medication_dispensing_status = models.CharField(max_length=20, default='В ожидании')  # Статус выдачи
     medication_dispensing_comment = models.CharField(max_length=1500)
-    
+
     def __str__(self):
         return f"Выдача {self.medication.medication_name} ({self.medication_dispensing_status})"
 

@@ -29,7 +29,6 @@ urlpatterns = [
     path('assignments/', views.assignments_view, name='assignments'),
     path('hospitalizations/', views.hospitalizations_view, name='hospitalizations'),
     path('procedures/', views.procedures_view, name='procedures'),
-    path('medications/', views.medications_view, name='medications'),
     path('assignments/export/', views.export_assignments, name='export_assignments'),
     path('patients/<int:patient_id>/hospitalization/', views.add_hospitalization, name='add_hospitalization'),
     path('active_procedures/', views.active_procedures_view, name='active_procedures'),
@@ -40,6 +39,9 @@ urlpatterns = [
     path('save_procedure/', views.save_procedure, name='save_procedure'),
     path('procedures_list/', views.procedures_view, name='procedures_list'),
     path('add_procedure_execution/', views.add_procedure_execution, name='add_procedure_execution'),
+    path('medications/', views.medications_view, name='medications'),
+    path('medications/', views.medications_view, name='medications'),
+
 ]
 
 

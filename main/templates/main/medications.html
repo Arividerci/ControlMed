@@ -1,0 +1,151 @@
+{% extends 'main/base.html' %}
+
+{% load static %}
+
+{% block title %}Выдача медикаментов{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'CSS/medications.css' %}">
+    <style>.medications-layout {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.medications-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.medications-table th, .medications-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.medications-table th {
+    background-color: #d76b49;
+    color: white;
+    font-weight: bold;
+}
+
+.medications-table tr:hover {
+    background-color: #f9f9f9;
+}
+
+.add-medication-form {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    margin-top: 30px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    font-weight: 600;
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.form-group select,
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #dfe6ed;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.submit-button {
+    background-color: #d76b49;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%;
+}
+
+.submit-button:hover {
+    background-color: #ec7653;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="medications-layout">
+    <h2>Выдача медикаментов</h2>
+
+    <!-- Таблица с записями выдачи медикаментов -->
+    <table class="medications-table">
+        <thead>
+            <tr>
+                <th>Дата выдачи</th>
+                <th>Медикамент</th>
+                <th>Доза</th>
+                <th>Статус</th>
+                <th>Комментарий</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for medication_dispensing in medications_dispensing %}
+                <tr>
+                    <td>{{ medication_dispensing.medication_dispensing_date }}</td>
+                    <td>{{ medication_dispensing.medication_id.medication_name }}</td>
+                    <td>{{ medication_dispensing.medication_dispensing_dose }}</td>
+                    <td>{{ medication_dispensing.medication_dispensing_status }}</td>
+                    <td>{{ medication_dispensing.medication_dispensing_comment }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3>Добавить выдачу медикамента</h3>
+
+    <!-- Форма для добавления новой записи о выдаче медикамента -->
+    <form method="post" class="add-medication-form">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="id_medication_id">Медикамент:</label>
+            {{ form.medication_id }}
+        </div>
+
+        <div class="form-group">
+            <label for="id_medication_dispensing_dose">Доза:</label>
+            {{ form.medication_dispensing_dose }}
+        </div>
+
+        <div class="form-group">
+            <label for="id_medication_dispensing_comment">Комментарий:</label>
+            {{ form.medication_dispensing_comment }}
+        </div>
+
+        <div class="form-group">
+            <label for="id_medication_dispensing_status">Статус:</label>
+            {{ form.medication_dispensing_status }}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="submit-button">Добавить выдачу медикамента</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

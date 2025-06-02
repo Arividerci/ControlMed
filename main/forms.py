@@ -192,9 +192,31 @@ class EditProfileForm(forms.ModelForm):
         fields = ['medical_staff_name', 'medical_staff_birthday', 'medical_staff_gender', 'medical_staff_post', 'medical_staff_specialisation']
 
 class AddProcedureExecutionForm(forms.ModelForm):
+    STATUS_CHOICES = [
+        ('В ожидании', 'В ожидании'),
+        ('Выполнено', 'Выполнено'),
+        ('Отменено', 'Отменено'),
+    ]
+
+    procedures_execution_status = forms.ChoiceField(
+        choices=STATUS_CHOICES,
+        label="Статус",
+        widget=forms.Select,
+        initial='В ожидании'  # Статус по умолчанию
+    )
+
     class Meta:
         model = ProceduresExecution
         fields = ['procedures_id', 'procedures_execution_duration', 'procedures_execution_comment', 'procedures_execution_status']
         widgets = {
             'procedures_execution_date': forms.DateInput(attrs={'type': 'date', 'value': date.today()})
         }
+
+class MedicationDispensingForm(forms.ModelForm):
+    class Meta:
+        model = MedicationDispensing
+        fields = ['medication_id', 'medication_dispensing_dose', 'medication_dispensing_comment', 'medication_dispensing_status']
+        widgets = {
+            'medication_dispensing_date': forms.DateInput(attrs={'type': 'date', 'value': date.today()})
+        }
+
