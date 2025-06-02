@@ -229,7 +229,18 @@ def edit_profile(request):
 
     return render(request, 'main/edit_profile.html', {'form': form})
 
-# Представление для удаления аккаунта
+
+@login_required
+def delete_medical_staff(request):
+    staff = MedicalStaff.objects.get(user=request.user)  # Получаем текущего сотрудника
+
+    if request.method == 'POST':
+        staff.delete()  # Удаляем сотрудника
+        messages.success(request, 'Ваш аккаунт был успешно удален.')
+        return redirect('login')  # Перенаправляем на страницу входа
+
+    return redirect('cabinet')  # Если запрос не POST, возвращаем на страницу кабинета
+
 @login_required
 def delete_account(request):
     staff = MedicalStaff.objects.get(user=request.user)
@@ -400,14 +411,20 @@ def register_step2(request):
         form = RegisterStep2Form()
 
     return render(request, 'main/register_step2.html', {'form': form})
-
 @login_required
 def cabinet(request):
-    try:
-        staff = MedicalStaff.objects.get(user=request.user)
-    except MedicalStaff.DoesNotExist:
-        staff = None
-    return render(request, 'main/cabinet.html', {'staff': staff})
+    staff = MedicalStaff.objects.get(user=request.user)  # Получаем текущего медицинского сотрудника
+
+    # Передаем только нужные поля для JSON сериализации
+    staff_data = {
+        'medical_staff_name': staff.medical_staff_name,
+        'medical_staff_post': staff.medical_staff_post,
+        'medical_staff_specialisation': staff.medical_staff_specialisation,
+        'medical_staff_birthday': staff.medical_staff_birthday,
+    }
+
+    return render(request, 'main/cabinet.html', {'staff': staff_data})
+
 
 @login_required
 def patients(request):
@@ -863,6 +880,22 @@ def patient_medbook(request, patient_id):
         'medbook_content': medbook_content,
     })
 
+@login_required
+def update_medical_staff(request):
+    staff = MedicalStaff.objects.get(user=request.user)
+    
+    if request.method == 'POST':
+        staff.medical_staff_name = request.POST['staff_name']
+        staff.medical_staff_post = request.POST['staff_post']
+        staff.medical_staff_specialisation = request.POST['staff_specialisation']
+        staff.medical_staff_birthday = request.POST['staff_birthday']
+        staff.save()
+
+        messages.success(request, 'Данные успешно обновлены!')
+        return redirect('cabinet')
+
+    return render(request, 'main/cabinet.html', {'staff': staff})
+
 @require_POST
 def update_medical_book_comment(request, patient_id, content_id):
     comment = request.POST.get('comment', '').strip()
@@ -1049,27 +1082,35 @@ def procedures_view(request):
 def medications_view(request):
     staff = MedicalStaff.objects.get(user=request.user)  # Получаем текущего медицинского сотрудника
 
-    # Получаем записи выдачи медикаментов
-    if staff.medical_staff_post == 'Главврач':
-        medications_dispensing = MedicationDispensing.objects.all()  # Все записи
-    else:
-        medications_dispensing = MedicationDispensing.objects.filter(medical_staff_id=staff)  # Только записи для текущего сотрудника
+    # Получаем активное назначение для текущего медицинского сотрудника
+    active_purpose = Purpose.objects.filter(
+        medical_staff=staff,
+        purpose_status='Активный'
+    ).first()  # Получаем первое активное назначение
 
-    # Обработка формы добавления нового медикамента
+    # Если активное назначение существует, фильтруем медикаменты для этого назначения
+    if active_purpose:
+        medications = Medication.objects.filter(
+            id__in=IncludesReception.objects.filter(purpose=active_purpose).values('medication_id')
+        )
+    else:
+        medications = Medication.objects.none()  # Если активного назначения нет, не показываем медикаменты
+
+    # Отображаем форму для добавления записи
     if request.method == 'POST':
         form = MedicationDispensingForm(request.POST)
         if form.is_valid():
             medication_dispensing = form.save(commit=False)
-            medication_dispensing.medical_staff_id = staff  # Сохраняем текущего сотрудника
-            medication_dispensing.medication_dispensing_date = date.today()  # Устанавливаем текущую дату
+            medication_dispensing.medical_staff = staff
+            medication_dispensing.medication_dispensing_date = date.today()
             medication_dispensing.save()
             messages.success(request, "Медикамент успешно выдан!")
-            return redirect('medications')  # Перенаправление на страницу медикаментов
+            return redirect('medications')  # Перенаправление на страницу с медикаментами
     else:
         form = MedicationDispensingForm()
 
     return render(request, 'main/medications.html', {
-        'medications_dispensing': medications_dispensing,
+        'medications': medications,
         'form': form,
     })
 

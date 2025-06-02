@@ -10,8 +10,6 @@
 {% block content %}
 <div id="section-main" class="patient-section">
     <div class="patient-layout">
-        <!-- Убираем левый слайдбар, теперь он не нужен -->
-
         <!-- Основная форма -->
         <div class="patient-form">
             <div class="header-row">
@@ -19,32 +17,32 @@
             </div>
             <div class="patient-identity">
                 <h3>Основная информация</h3>
-                <form method="POST">
+                <form method="POST" id="staffForm">
                     {% csrf_token %}
                     <div class="form-row">
                         <div class="form-group">
                             <label for="staff_name">ФИО:</label>
-                            <input type="text" id="staff_name" name="staff_name" value="{{ staff.medical_staff_name }}" required>
+                            <input type="text" id="staff_name" name="staff_name" value="{{ staff.medical_staff_name }}" required onchange="checkChanges()">
                         </div>
                         <div class="form-group">
                             <label for="staff_post">Должность:</label>
-                            <input type="text" id="staff_post" name="staff_post" value="{{ staff.medical_staff_post }}" required>
+                            <input type="text" id="staff_post" name="staff_post" value="{{ staff.medical_staff_post }}" required onchange="checkChanges()">
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label for="staff_specialisation">Специализация:</label>
-                            <input type="text" id="staff_specialisation" name="staff_specialisation" value="{{ staff.medical_staff_specialisation }}" required>
+                            <input type="text" id="staff_specialisation" name="staff_specialisation" value="{{ staff.medical_staff_specialisation }}" required onchange="checkChanges()">
                         </div>
                         <div class="form-group">
                             <label for="staff_birthday">Дата рождения:</label>
-                            <input type="date" id="staff_birthday" name="staff_birthday" value="{{ staff.medical_staff_birthday|date:'Y-m-d' }}" required>
+                            <input type="date" id="staff_birthday" name="staff_birthday" value="{{ staff.medical_staff_birthday|date:'Y-m-d' }}" required onchange="checkChanges()">
                         </div>
                     </div>
 
                     <div class="form-actions">
-                        <button type="submit" class="save-button">Сохранить</button>
+                        <button type="submit" id="saveButton" class="save-button" disabled>Сохранить</button>
                     </div>
                 </form>
             </div>
@@ -52,9 +50,35 @@
             <div class="account-actions">
                 <h4>Действия с аккаунтом</h4>
                 <p>Вы можете редактировать или удалить данные.</p>
-                <button type="button" class="delete-button" onclick="confirmDelete()">Удалить аккаунт</button>
+                <form method="POST" action="{% url 'delete_medical_staff' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="delete-button" onclick="return confirm('Вы уверены, что хотите удалить свой аккаунт?')">Удалить аккаунт</button>
+                </form>
             </div>
         </div>
     </div>
 </div>
+
+{% block scripts %}
+<script>
+    function checkChanges() {
+    const form = document.getElementById("staffForm");
+    const saveButton = document.getElementById("saveButton");
+
+    const originalData = JSON.parse(document.getElementById("staffData").textContent); 
+
+    const formData = new FormData(form);
+    let changed = false;
+
+    formData.forEach((value, key) => {
+        if (originalData[key] !== value) {
+            changed = true;
+        }
+    });
+
+    saveButton.disabled = !changed; 
+}
+
+</script>
+{% endblock %}
 {% endblock %}

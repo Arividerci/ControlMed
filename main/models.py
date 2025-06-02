@@ -87,7 +87,8 @@ class Medication(models.Model):
     medication_id = models.AutoField(primary_key=True)
     medication_name = models.CharField(max_length=150)
     medication_dose = models.SmallIntegerField()
-
+    def __str__(self):
+        return self.medication_name  # Выводим имя медикамента
     class Meta:
         db_table = 'medication'
         managed = False

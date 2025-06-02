@@ -220,3 +220,13 @@ class MedicationDispensingForm(forms.ModelForm):
             'medication_dispensing_date': forms.DateInput(attrs={'type': 'date', 'value': date.today()})
         }
 
+    def __init__(self, *args, **kwargs):
+        # Получаем активные медикаменты для назначения
+        active_purpose = kwargs.pop('active_purpose', None)
+        super(MedicationDispensingForm, self).__init__(*args, **kwargs)
+        
+        if active_purpose:
+            # Ограничиваем выбор только теми медикаментами, которые связаны с активным назначением
+            self.fields['medication_id'].queryset = Medication.objects.filter(
+                id__in=IncludesReception.objects.filter(purpose=active_purpose).values('medication_id')
+            )
